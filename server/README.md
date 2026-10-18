@@ -83,3 +83,15 @@ All responses are JSON. Errors use `{ "error": { "code", "message", "details" } 
 | Concierge | Rule-based placeholder replies | Concierge desk tool for the 24/7 team |
 | SSO, Apple, Google sign-in | Not implemented | OIDC / SAML |
 | Document uploads | Not stored | Object storage (S3/R2) with signed URLs |
+
+## Deployment and review notes
+
+- `TRUST_PROXY_HOPS` defaults to `0` (direct local connections). The Render Blueprint sets `1`, trusting only the nearest proxy hop rather than arbitrary forwarded prefixes. Confirm the actual ingress chain when changing hosting or adding a CDN.
+- `DATABASE_SSL` defaults to `true`: external PostgreSQL connections verify server certificates; URL SSL flags cannot disable verification. The Blueprint sets `false` only because `fromDatabase.connectionString` is Render's **private network** URL. Do not use that setting with an external database URL. See [Render connection documentation](https://render.com/docs/postgresql-creating-connecting).
+- Live flight selection/display uses **UTC**, explicitly labeled in the route picker. Demo mode retains its existing local-time presentation.
+- OTP issuance and verification serialize in a short database transaction, including failed-attempt increments. This intentionally trades OTP throughput for correctness in this single-service MVP.
+- Booking creation, operator responses and payments lock the quote request first. Traveler/amenity updates lock the booking. Payment rechecks the request, current price, expiry and verified travelers within the transaction. All transactional queries use the transaction handle, including on PGlite.
+- A masked traveler passport may be omitted when editing an existing position; the server retains that position's encrypted passport and rechecks identity fields. New travelers still require a passport.
+- `DEMO_OTP=true` intentionally allows anyone to obtain a code for any email, including seeded privileged accounts. This deployment is a public **demo**, and must use synthetic personal data and mock balances. Disable demo codes and connect an actual delivery provider before authenticating real customers.
+- Mock wire payments remain pending; no transfer instructions or confirmation emails are sent. Seed data is transactional and repeat-safe. Shutdown drains HTTP before closing the database, with a 15-second deadline.
+- The in-memory PGlite tests exercise concurrent API requests, but its single connection serializes transactions. Validate contention and ingress/TLS behavior on Render PostgreSQL before a real customer rollout; no hosted environment is exercised by this test suite.

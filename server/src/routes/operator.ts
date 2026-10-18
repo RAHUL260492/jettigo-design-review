@@ -98,7 +98,7 @@ export async function operatorRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
   app.patch("/operator/aircraft/:id", async (req) => {
     const { op } = await operatorOf(req, { allowPending: true });
     const { id } = parse(z.object({ id: z.uuid() }), req.params);
-    const body = parse(z.object({ hourlyRateCents: aircraftInput.shape.hourlyRateCents.optional(), active: z.boolean().optional() }), req.body);
+    const body = parse(z.object({ hourlyRateCents: aircraftInput.shape.hourlyRateCents.optional(), active: z.boolean().optional() }).refine((v) => Object.keys(v).length > 0, "Provide at least one field"), req.body);
     const [a] = await db.update(aircraft).set(body).where(and(eq(aircraft.id, id), eq(aircraft.operatorId, op.id))).returning();
     if (!a) throw notFound("Aircraft");
     return { aircraft: { ...aircraftView(a), active: a.active } };
@@ -144,28 +144,33 @@ export async function operatorRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
       ]),
       req.body,
     );
-    const [row] = await db
-      .select({ quote: quotes, request: quoteRequests })
-      .from(quotes)
-      .innerJoin(quoteRequests, eq(quotes.requestId, quoteRequests.id))
-      .where(and(eq(quotes.id, id), eq(quotes.operatorId, op.id)))
-      .limit(1);
-    if (!row) throw notFound("Quote");
-    const status = effectiveStatus(row.quote);
-    if ((status !== "offered" && status !== "countered") || row.request.status !== "open") throw conflict("This request can no longer be answered");
-
-    const patch =
-      body.action === "accept"
-        ? { status: "offered" as const, priceCents: row.quote.standardPriceCents, operatorConfirmed: true }
-        : body.action === "counter"
-          ? (() => {
-              const std = row.quote.standardPriceCents;
-              if (body.priceCents < std * 0.5 || body.priceCents > std * 3) throw badRequest("Counter offer must be between 50% and 300% of the standard rate");
-              return { status: "countered" as const, priceCents: body.priceCents, operatorConfirmed: true };
-            })()
-          : { status: "declined" as const, declineReason: body.reason, operatorConfirmed: true };
-    const [q] = await db.update(quotes).set(patch).where(eq(quotes.id, id)).returning();
-    return { quote: { id: q!.id, status: q!.status, priceCents: q!.priceCents, declineReason: q!.declineReason } };
+    return db.transaction(async (tx) => {
+      const [pointer] = await tx.select().from(quotes).where(and(eq(quotes.id, id), eq(quotes.operatorId, op.id)));
+      if (!pointer) throw notFound("Quote");
+      await tx.select().from(quoteRequests).where(eq(quoteRequests.id, pointer.requestId)).for("update");
+      const [row] = await tx
+        .select({ quote: quotes, request: quoteRequests })
+        .from(quotes)
+        .innerJoin(quoteRequests, eq(quotes.requestId, quoteRequests.id))
+        .where(and(eq(quotes.id, id), eq(quotes.operatorId, op.id)))
+        .limit(1);
+      if (!row) throw notFound("Quote");
+      const status = effectiveStatus(row.quote);
+      if ((status !== "offered" && status !== "countered") || row.request.status !== "open") throw conflict("This request can no longer be answered");
+  
+      const patch =
+        body.action === "accept"
+          ? { status: "offered" as const, priceCents: row.quote.standardPriceCents, operatorConfirmed: true }
+          : body.action === "counter"
+            ? (() => {
+                const std = row.quote.standardPriceCents;
+                if (body.priceCents < std * 0.5 || body.priceCents > std * 3) throw badRequest("Counter offer must be between 50% and 300% of the standard rate");
+                return { status: "countered" as const, priceCents: body.priceCents, operatorConfirmed: true };
+              })()
+            : { status: "declined" as const, declineReason: body.reason, operatorConfirmed: true };
+      const [q] = await tx.update(quotes).set(patch).where(eq(quotes.id, id)).returning();
+      return { quote: { id: q!.id, status: q!.status, priceCents: q!.priceCents, declineReason: q!.declineReason } };
+    });
   });
 
   // ---------- Platform admin ----------

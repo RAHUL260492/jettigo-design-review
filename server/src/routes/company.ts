@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import type { Ctx } from "../app.js";
@@ -28,11 +28,11 @@ export async function companyRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     const [company] = await db.select().from(companies).where(eq(companies.id, user.companyId));
     if (!company) throw notFound("Company");
     const since = new Date();
-    since.setMonth(since.getMonth() - 6, 1);
-    since.setHours(0, 0, 0, 0);
+    since.setUTCMonth(since.getUTCMonth() - 5, 1);
+    since.setUTCHours(0, 0, 0, 0);
     const paid = and(eq(bookings.companyId, user.companyId), inArray(bookings.status, ["confirmed", "pending_payment"]), gte(bookings.createdAt, since));
     const monthly = await db
-      .select({ month: sql<string>`to_char(date_trunc('month', ${bookings.createdAt}), 'YYYY-MM')`, cents: sql<number>`coalesce(sum(${bookings.totalCents}), 0)::int`, flights: count() })
+      .select({ month: sql<string>`to_char(date_trunc('month', ${bookings.createdAt}), 'YYYY-MM')`, cents: sql<number>`coalesce(sum(${bookings.totalCents}), 0)`, flights: count() })
       .from(bookings)
       .where(paid)
       .groupBy(sql`1`)
@@ -62,8 +62,9 @@ export async function companyRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     if (existing?.companyId) throw conflict("This person already belongs to a company");
     if (existing && existing.role !== "passenger") throw conflict("Operator and admin accounts cannot join a company");
     const [m] = existing
-      ? await db.update(users).set({ companyId: user.companyId, companyRole: body.role, name: existing.name ?? body.name }).where(eq(users.id, existing.id)).returning()
-      : await db.insert(users).values({ email: body.email, name: body.name, companyId: user.companyId, companyRole: body.role, referralCode: await newReferralCode(db) }).returning();
+      ? await db.update(users).set({ companyId: user.companyId, companyRole: body.role, name: existing.name ?? body.name }).where(and(eq(users.id, existing.id), isNull(users.companyId), eq(users.role, "passenger"))).returning()
+      : await db.insert(users).values({ email: body.email, name: body.name, companyId: user.companyId, companyRole: body.role, referralCode: await newReferralCode(db) }).onConflictDoNothing({ target: users.email }).returning();
+    if (!m) throw conflict("This person already belongs to an account or company");
     reply.status(201);
     return { member: publicUser(m!) };
   });

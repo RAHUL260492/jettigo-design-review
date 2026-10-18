@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Ctx } from "../app.js";
 import { aircraft, airports, operators, quoteRequests, quotes } from "../db/schema.js";
 import { currentUser } from "../lib/auth.js";
-import { badRequest, notFound, parse } from "../lib/errors.js";
+import { badRequest, notFound, parse, unauthorized } from "../lib/errors.js";
 import { distanceNm, flightMinutes, inRange, quotePriceCents } from "../lib/pricing.js";
 import { quotesForRequests } from "../lib/views.js";
 
@@ -36,6 +36,7 @@ export async function searchRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     if (!from || !to) throw badRequest("Unknown airport");
     const nm = Math.round(distanceNm(from, to));
     const user = await currentUser(req, db, cfg.jwtSecret);
+    if (req.headers.authorization && !user) throw unauthorized();
 
     const fleet = await db
       .select({ aircraft })

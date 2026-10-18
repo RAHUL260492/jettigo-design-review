@@ -9,6 +9,21 @@
 
   const S = J.state;
   const D = () => J.data;
+  const initialState = structuredClone(S);
+  const initialData = structuredClone(J.data);
+  let sessionGeneration = 0;
+  function clearPrivateState() {
+    sessionGeneration++;
+    J.timers.forEach((stop) => stop());
+    J.timers = [];
+    Object.keys(S).forEach((key) => delete S[key]);
+    Object.assign(S, structuredClone(initialState), { travelers: {}, verified: {}, lead: "", addr: "", chauffeur: { name: "", plate: "" } });
+    Object.keys(J.data).forEach((key) => delete J.data[key]);
+    Object.assign(J.data, structuredClone(initialData));
+    J.jets = {};
+    J.fees = 0;
+    L.company = null;
+  }
   const store = {
     get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
     set(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage unavailable */ } },
@@ -18,6 +33,7 @@
 
   /* ---------- API client ---------- */
   async function api(method, path, body, { raw = false } = {}) {
+    const generation = sessionGeneration;
     let res;
     try {
       res = await fetch(L.base + path, {
@@ -28,9 +44,11 @@
     } catch {
       throw Object.assign(new Error("Can't reach the Jettigo server. If it was asleep it may take up to a minute to wake; please try again."), { status: 0 });
     }
+    if (generation !== sessionGeneration) throw Object.assign(new Error("Session changed"), { staleSession: true });
     if (res.status === 401 && L.token) setSession(null, null);
     if (raw && res.ok) return res;
     const data = await res.json().catch(() => ({}));
+    if (generation !== sessionGeneration && res.status !== 401) throw Object.assign(new Error("Session changed"), { staleSession: true });
     if (!res.ok) {
       const details = data.error && Array.isArray(data.error.details) ? data.error.details.map((d) => d.message).join("; ") : "";
       const msg = data.error && data.error.message ? data.error.message + (details ? `: ${details}` : "") : `Request failed (${res.status})`;
@@ -41,6 +59,7 @@
   L.api = api;
 
   function setSession(token, user) {
+    if (!token || (L.user && user && L.user.id !== user.id)) clearPrivateState();
     L.token = token;
     L.user = user;
     store.set("jg_token", token);
@@ -65,6 +84,7 @@
   const busy = (el, on) => el && el.classList.toggle("is-loading", on);
   const fail = (err, el) => {
     busy(el, false);
+    if (err && err.staleSession) return;
     if (err && err.status === 401) return L.toLogin(J.current());
     J.toast((err && err.message) || "Something went wrong", "circle-alert");
   };
@@ -74,7 +94,7 @@
   };
   function departAtIso() {
     const [hh, mm] = S.time.split(":").map(Number);
-    return new Date(S.date.y, S.date.m, S.date.d, hh, mm).toISOString();
+    return new Date(Date.UTC(S.date.y, S.date.m, S.date.d, hh, mm)).toISOString();
   }
   function download(res, fallbackName) {
     return res.blob().then((blob) => {
@@ -133,12 +153,16 @@
   function applyBooking(b) {
     S.booking = b;
     S.ref = b.ref;
-    if (b.travelers[0]) S.lead = b.travelers[0].fullName;
+    S.lead = b.travelers[0]?.fullName || "";
+    S.travelers = Object.fromEntries(b.travelers.map((t) => [t.position, { name: t.fullName, passport: t.passport, nat: t.nationality, dob: t.dateOfBirth }]));
+    S.travelersDirty = false;
+    S.addr = b.ground?.destination || "";
+    S.chauffeur = b.ground?.chauffeur || { name: "", plate: "" };
     S.origin = label(b.origin);
     S.dest = label(b.destination);
     const d = new Date(b.departAt);
-    S.date = { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() };
-    S.time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    S.date = { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate() };
+    S.time = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
     S.pax = b.passengers;
     const a = b.aircraft || {};
     J.jets = { ...J.jets, booked: { name: a.model, cls: CLS[a.category] || "", cat: CAT[a.category] || "mid", yom: a.yearOfManufacture, pax: a.seats, range: `${(a.rangeNm || 0).toLocaleString("en-US")} nm`, rate: (a.hourlyRateCents || 0) / 100, est: b.price.flightCents / 100, img: a.image || "jet-g650", time: fmtMin(b.flightMinutes) } };
@@ -192,17 +216,19 @@
       fail(err, el);
     }
   }
-  async function needBooking({ confirmed = false } = {}) {
+  async function needBooking({ confirmed = false, receipt = false } = {}) {
     needAuth();
     if (!S.booking) {
       const list = (await api("GET", "/v1/bookings")).bookings;
-      const pick = confirmed ? list.filter((b) => b.status === "confirmed").sort((a, b) => new Date(a.departAt) - new Date(b.departAt)).find((b) => new Date(b.departAt) > Date.now() - 12 * 3600_000) : list.find((b) => b.status === "draft");
+      const pick = confirmed ? list.filter((b) => b.status === "confirmed").sort((a, b) => new Date(a.departAt) - new Date(b.departAt)).find((b) => new Date(b.departAt) > Date.now() - 12 * 3600_000) : receipt ? list.filter((b) => ["confirmed", "pending_payment"].includes(b.status)).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0] : list.find((b) => b.status === "draft");
       if (!pick) throw redirect("route", confirmed ? "No confirmed trips yet. Book a flight first." : "Start by searching for a flight.");
       applyBooking(pick);
     } else {
       applyBooking(await api("GET", `/v1/bookings/${S.booking.id}`));
     }
-    if (confirmed && S.booking.status !== "confirmed") throw redirect("pay", "Complete payment to see your trip.");
+    if (!confirmed && !receipt && S.booking.status !== "draft") throw redirect("confirmed", "This booking is no longer editable.");
+    if (receipt && S.booking.status === "draft") throw redirect("pay", "Complete payment first.");
+    if (confirmed && S.booking.status !== "confirmed") throw redirect(S.booking.status === "pending_payment" ? "confirmed" : "pay", "Complete payment to see your trip.");
   }
 
   /* ---------- Per-screen wiring ---------- */
@@ -280,7 +306,12 @@
   });
 
   const quotesLoad = async () => {
-    if (!S.quotes) await runSearch();
+    if (!S.request) await runSearch();
+    else {
+      const r = await api("GET", `/v1/quote-requests/${S.request.id}`);
+      S.quotes = r.quotes;
+      J.jets = mapQuotes(r.quotes);
+    }
   };
   wire("jets", { load: quotesLoad, init: (root) => on(root, "click", "[data-jet]", (el) => bookQuote(el.dataset.jet, el)) });
   wire("compare", { load: quotesLoad, init: (root) => on(root, "click", "[data-jet]", (el) => bookQuote(el.dataset.jet, el)) });
@@ -288,24 +319,36 @@
   wire("travelers", {
     load: () => needBooking(),
     init(root) {
+      root.addEventListener("input", (e) => { if (e.target.dataset.f) S.travelersDirty = true; });
+      on(root, "click", '[data-act="scan"],[data-act="selfie"]', (el) => {
+        const card = el.closest("[data-pax]");
+        const n = +card.dataset.pax;
+        const t = S.travelers[n] || {};
+        if (!t.name || !t.passport || !t.nat || !t.dob) return J.toast("Enter all traveler details first", "info");
+        S.verified[n] = true;
+        S.travelersDirty = true;
+        card.classList.add("done");
+        card.querySelector(".xs.faint").textContent = "Verified (simulated)";
+        root.querySelector("#vcount").textContent = `${Object.values(S.verified).filter(Boolean).length} of ${S.pax} verified`;
+        J.toast("Identity check completed (simulated)");
+      });
       on(root, "click", 'a[href="#/amenities"]', async (el) => {
         const b = S.booking;
         const allVerified = b.travelers.length === b.passengers && b.travelers.every((t) => t.verified);
-        const edited = Object.keys(S.travelers || {}).length > 0;
+        const edited = S.travelersDirty;
         if (allVerified && !edited) return J.go("amenities");
         const list = [];
         for (let n = 1; n <= b.passengers; n++) {
           const t = (S.travelers || {})[n] || {};
           if (!t.name || !t.passport || !t.nat || !t.dob) return J.toast(`Add all details for passenger ${n}`, "info");
           if (!S.verified[n]) return J.toast(`Scan passenger ${n}'s passport to verify their identity`, "scan-line");
-          list.push({ fullName: t.name, passportNumber: String(t.passport).replace(/\s/g, ""), nationality: t.nat, dateOfBirth: toIsoDate(t.dob) });
+          list.push({ fullName: t.name, passportNumber: String(t.passport).startsWith("•••• ") ? undefined : String(t.passport).replace(/\s/g, ""), nationality: t.nat, dateOfBirth: toIsoDate(t.dob) });
         }
         busy(el, true);
         try {
           await api("PUT", `/v1/bookings/${b.id}/travelers`, { travelers: list });
           for (let n = 1; n <= b.passengers; n++) await api("POST", `/v1/bookings/${b.id}/travelers/${n}/verify`);
           applyBooking(await api("GET", `/v1/bookings/${b.id}`));
-          S.travelers = {};
           J.go("amenities");
         } catch (err) {
           fail(err, el);
@@ -323,6 +366,7 @@
       }
     },
     init(root) {
+      root.querySelector("textarea").value = S.booking.specialRequests || "";
       on(root, "click", 'a[href="#/pay"]', async (el) => {
         busy(el, true);
         try {
@@ -347,7 +391,7 @@
         busy(el, true);
         try {
           applyBooking(await api("POST", `/v1/bookings/${S.booking.id}/pay`, { method: S.payMethod }));
-          if (S.booking.status === "pending_payment") J.toast("Booking held. Bank details for the wire transfer are on their way by email.", "landmark");
+          if (S.booking.status === "pending_payment") J.toast("Mock wire payment is pending. No email is sent.", "landmark");
           J.go("confirmed");
         } catch (err) {
           fail(err, el);
@@ -356,7 +400,7 @@
     },
   });
 
-  wire("confirmed", { load: () => needBooking() });
+  wire("confirmed", { load: () => needBooking({ receipt: true }) });
 
   wire("trip", {
     async load() {
@@ -709,8 +753,8 @@
           quoteId: q.id,
           from: r.origin.code,
           to: r.destination.code,
-          date: d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }),
-          time: d.toTimeString().slice(0, 5),
+          date: d.toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short", year: "numeric" }),
+          time: d.toISOString().slice(11, 16) + " UTC",
           pax: r.passengers,
           bags: `${r.bags} bags, ${r.baggageKg} kg`,
           member: "",

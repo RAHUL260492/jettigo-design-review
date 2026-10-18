@@ -27,21 +27,25 @@ export async function authRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
 
   app.post("/auth/otp", { config: tight }, async (req) => {
     const body = parse(z.object({ email }), req.body);
-    const since = new Date(Date.now() - 15 * 60 * 1000);
-    const [recent] = await db
-      .select({ n: count() })
-      .from(otpCodes)
-      .where(and(eq(otpCodes.email, body.email), gt(otpCodes.createdAt, since)));
-    if ((recent?.n ?? 0) >= MAX_CODES_PER_WINDOW) {
-      throw new HttpError(429, "rate_limited", "Too many codes requested. Try again in a few minutes.");
-    }
     const code = otpCode();
-    // A new code supersedes any earlier ones for this email.
-    await db.update(otpCodes).set({ consumedAt: new Date() }).where(and(eq(otpCodes.email, body.email), isNull(otpCodes.consumedAt)));
-    await db.insert(otpCodes).values({
-      email: body.email,
-      codeHash: hashOtp(cfg.jwtSecret, body.email, code),
-      expiresAt: new Date(Date.now() + OTP_TTL_MS),
+    await db.transaction(async (tx) => {
+      // Serialize issuance and verification, including the first code for an email.
+      await tx.execute(sql`lock table otp_codes in exclusive mode`);
+      const since = new Date(Date.now() - 15 * 60 * 1000);
+      const [recent] = await tx
+        .select({ n: count() })
+        .from(otpCodes)
+        .where(and(eq(otpCodes.email, body.email), gt(otpCodes.createdAt, since)));
+      if ((recent?.n ?? 0) >= MAX_CODES_PER_WINDOW) {
+        throw new HttpError(429, "rate_limited", "Too many codes requested. Try again in a few minutes.");
+      }
+      // A new code supersedes any earlier ones for this email.
+      await tx.update(otpCodes).set({ consumedAt: new Date() }).where(and(eq(otpCodes.email, body.email), isNull(otpCodes.consumedAt)));
+      await tx.insert(otpCodes).values({
+        email: body.email,
+        codeHash: hashOtp(cfg.jwtSecret, body.email, code),
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      });
     });
     // No email provider is connected yet: log in development, optionally echo for demos.
     if (cfg.env !== "production") req.log.info({ email: body.email, code }, "one-time code");
@@ -53,26 +57,22 @@ export async function authRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
       z.object({ email, code: z.string().regex(/^\d{6}$/), name: z.string().trim().max(120).optional(), referralCode: z.string().max(40).optional() }),
       req.body,
     );
-    const [otp] = await db
-      .select()
-      .from(otpCodes)
-      .where(and(eq(otpCodes.email, body.email), isNull(otpCodes.consumedAt), gt(otpCodes.expiresAt, new Date())))
-      .orderBy(desc(otpCodes.createdAt))
-      .limit(1);
-    if (!otp) throw new HttpError(400, "invalid_code", "Code expired or not found. Request a new one.");
-    if (otp.attempts >= MAX_ATTEMPTS) throw new HttpError(429, "too_many_attempts", "Too many attempts. Request a new code.");
-
-    if (!safeEqualHex(otp.codeHash, hashOtp(cfg.jwtSecret, body.email, body.code))) {
-      await db.update(otpCodes).set({ attempts: sql`${otpCodes.attempts} + 1` }).where(eq(otpCodes.id, otp.id));
-      throw new HttpError(400, "invalid_code", "That code is not correct.");
-    }
-    // Consume atomically so a code can only be used once, even under concurrent requests.
-    const consumed = await db
-      .update(otpCodes)
-      .set({ consumedAt: new Date() })
-      .where(and(eq(otpCodes.id, otp.id), isNull(otpCodes.consumedAt)))
-      .returning({ id: otpCodes.id });
-    if (consumed.length === 0) throw new HttpError(400, "invalid_code", "Code already used. Request a new one.");
+    const failure = await db.transaction(async (tx) => {
+      await tx.execute(sql`lock table otp_codes in exclusive mode`);
+      const [otp] = await tx.select().from(otpCodes)
+        .where(and(eq(otpCodes.email, body.email), isNull(otpCodes.consumedAt), gt(otpCodes.expiresAt, new Date())))
+        .orderBy(desc(otpCodes.createdAt)).limit(1);
+      if (!otp) return new HttpError(400, "invalid_code", "Code expired or not found. Request a new one.");
+      if (otp.attempts >= MAX_ATTEMPTS) return new HttpError(429, "too_many_attempts", "Too many attempts. Request a new code.");
+      if (!safeEqualHex(otp.codeHash, hashOtp(cfg.jwtSecret, body.email, body.code))) {
+        await tx.update(otpCodes).set({ attempts: otp.attempts + 1 }).where(eq(otpCodes.id, otp.id));
+        // Return the error so the failed attempt commits instead of rolling back.
+        return new HttpError(400, "invalid_code", "That code is not correct.");
+      }
+      await tx.update(otpCodes).set({ consumedAt: new Date() }).where(eq(otpCodes.id, otp.id));
+      return null;
+    });
+    if (failure) throw failure;
 
     let [user] = await db.select().from(users).where(eq(users.email, body.email)).limit(1);
     if (!user) {

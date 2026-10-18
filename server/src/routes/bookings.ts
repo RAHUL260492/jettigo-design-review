@@ -11,6 +11,7 @@ import {
   bookings,
   companies,
   groundTransfers,
+  operators,
   invoices,
   payments,
   quoteRequests,
@@ -38,6 +39,20 @@ export async function loadBooking(db: DB, user: User, id: string): Promise<Booki
   const companyAccess = !!b?.companyId && b.companyId === user.companyId && (user.companyRole === "admin" || user.companyRole === "booker");
   if (!b || !(b.userId === user.id || companyAccess || user.role === "admin")) throw notFound("Booking");
   return b;
+}
+
+async function lockBooking(db: DB, user: User, id: string, status: Booking["status"] = "draft") {
+  await db.select({ id: bookings.id }).from(bookings).where(eq(bookings.id, id)).for("update");
+  const b = await loadBooking(db, user, id);
+  if (b.status !== status) throw conflict("Booking is no longer editable");
+  return b;
+}
+
+async function availableAircraft(db: DB, aircraftId: string) {
+  const [a] = await db.select({ active: aircraft.active, status: operators.status })
+    .from(aircraft).innerJoin(operators, eq(aircraft.operatorId, operators.id))
+    .where(eq(aircraft.id, aircraftId)).for("share");
+  if (!a?.active || a.status !== "approved") throw conflict("Aircraft is no longer available");
 }
 
 async function uniqueRef(db: DB): Promise<string> {
@@ -120,7 +135,7 @@ export function liveStatus(b: Booking, origin: { lat: number; lon: number }, des
 
 const travelerInput = z.object({
   fullName: z.string().trim().min(2).max(120),
-  passportNumber: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{5,15}$/, "Passport number must be 5–15 letters or digits"),
+  passportNumber: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{5,15}$/, "Passport number must be 5–15 letters or digits").optional(),
   nationality: z.string().trim().min(2).max(56),
   dateOfBirth: z.iso.date().refine((d) => new Date(d) < new Date(), "Date of birth must be in the past"),
 });
@@ -131,49 +146,63 @@ export async function bookingRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
   app.post("/bookings", async (req, reply) => {
     const user = await auth(req);
     const body = parse(z.object({ quoteId: z.uuid() }), req.body);
-    const [row] = await db
-      .select({ quote: quotes, request: quoteRequests })
-      .from(quotes)
-      .innerJoin(quoteRequests, eq(quotes.requestId, quoteRequests.id))
-      .where(eq(quotes.id, body.quoteId))
-      .limit(1);
-    if (!row || (row.request.userId && row.request.userId !== user.id)) throw notFound("Quote");
-    const status = effectiveStatus(row.quote);
-    if (status !== "offered" && status !== "countered") throw conflict("This quote is no longer available. Search again for fresh quotes.");
-    if (row.request.status !== "open") throw conflict("This trip has already been booked");
-
-    const [existing] = await db
-      .select()
-      .from(bookings)
-      .where(and(eq(bookings.quoteId, row.quote.id), eq(bookings.userId, user.id), eq(bookings.status, "draft")))
-      .limit(1);
-    if (existing) return bookingView(db, existing);
-
-    if (!row.request.userId) {
-      await db.update(quoteRequests).set({ userId: user.id }).where(and(eq(quoteRequests.id, row.request.id), isNull(quoteRequests.userId)));
-    }
-    const flight = row.quote.priceCents;
-    const fees = feesCents(flight);
-    const [b] = await db
-      .insert(bookings)
-      .values({
-        ref: await uniqueRef(db),
-        userId: user.id,
-        companyId: user.companyId,
-        quoteId: row.quote.id,
-        aircraftId: row.quote.aircraftId,
-        origin: row.request.origin,
-        destination: row.request.destination,
-        departAt: row.request.departAt,
-        flightMinutes: row.quote.flightMinutes,
-        passengers: row.request.passengers,
-        flightCents: flight,
-        feesCents: fees,
-        totalCents: flight + fees,
-      })
-      .returning();
-    reply.status(201);
-    return bookingView(db, b!);
+    const result = await db.transaction(async (tx) => {
+      const [q] = await tx.select().from(quotes).where(eq(quotes.id, body.quoteId));
+      if (!q) throw notFound("Quote");
+      await tx.select().from(quoteRequests).where(eq(quoteRequests.id, q.requestId)).for("update");
+      const [row] = await tx
+        .select({ quote: quotes, request: quoteRequests })
+        .from(quotes)
+        .innerJoin(quoteRequests, eq(quotes.requestId, quoteRequests.id))
+        .where(eq(quotes.id, body.quoteId))
+        .limit(1);
+      if (!row || (row.request.userId && row.request.userId !== user.id)) throw notFound("Quote");
+      const status = effectiveStatus(row.quote);
+      if (status !== "offered" && status !== "countered") throw conflict("This quote is no longer available. Search again for fresh quotes.");
+      if (row.request.status !== "open") throw conflict("This trip has already been booked");
+  
+      await availableAircraft(tx, row.quote.aircraftId);
+      const [existing] = await tx
+        .select()
+        .from(bookings)
+        .where(and(eq(bookings.quoteId, row.quote.id), eq(bookings.userId, user.id), eq(bookings.status, "draft")))
+        .limit(1);
+      if (existing) {
+        const locked = await lockBooking(tx, user, existing.id);
+        const [updated] = await tx.update(bookings).set({
+          flightCents: row.quote.priceCents, feesCents: feesCents(row.quote.priceCents),
+          totalCents: row.quote.priceCents + feesCents(row.quote.priceCents) + locked.amenitiesCents,
+        }).where(eq(bookings.id, existing.id)).returning();
+        return updated!;
+      }
+  
+      if (!row.request.userId) {
+        await tx.update(quoteRequests).set({ userId: user.id }).where(and(eq(quoteRequests.id, row.request.id), isNull(quoteRequests.userId)));
+      }
+      const flight = row.quote.priceCents;
+      const fees = feesCents(flight);
+      const [b] = await tx
+        .insert(bookings)
+        .values({
+          ref: await uniqueRef(tx),
+          userId: user.id,
+          companyId: user.companyId,
+          quoteId: row.quote.id,
+          aircraftId: row.quote.aircraftId,
+          origin: row.request.origin,
+          destination: row.request.destination,
+          departAt: row.request.departAt,
+          flightMinutes: row.quote.flightMinutes,
+          passengers: row.request.passengers,
+          flightCents: flight,
+          feesCents: fees,
+          totalCents: flight + fees,
+        })
+        .returning();
+      reply.status(201);
+      return b!;
+    });
+    return bookingView(db, result);
   });
 
   app.get("/bookings", async (req) => {
@@ -196,20 +225,23 @@ export async function bookingRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     const body = parse(z.object({ travelers: z.array(travelerInput).min(1).max(19) }), req.body);
     if (body.travelers.length !== b.passengers) throw conflict(`This booking needs exactly ${b.passengers} travelers`);
 
-    const old = await db.select().from(travelers).where(eq(travelers.bookingId, b.id));
     await db.transaction(async (tx) => {
+      await lockBooking(tx, user, b.id);
+      const old = await tx.select().from(travelers).where(eq(travelers.bookingId, b.id));
       await tx.delete(travelers).where(eq(travelers.bookingId, b.id));
       await tx.insert(travelers).values(
         body.travelers.map((t, i) => {
           const prev = old.find((o) => o.position === i + 1);
+          const passport = t.passportNumber ?? (prev ? decrypt(cfg.piiKey, prev.passportEnc) : null);
+          if (!passport) throw badRequest("Passport number is required for new travelers");
           // Keep a completed identity check only if none of the identity fields changed.
-          const same = !!prev && prev.fullName === t.fullName && prev.nationality === t.nationality && prev.dateOfBirth === t.dateOfBirth && decrypt(cfg.piiKey, prev.passportEnc) === t.passportNumber;
+          const same = !!prev && prev.fullName === t.fullName && prev.nationality === t.nationality && prev.dateOfBirth === t.dateOfBirth && decrypt(cfg.piiKey, prev.passportEnc) === passport;
           return {
             bookingId: b.id,
             position: i + 1,
             fullName: t.fullName,
-            passportEnc: encrypt(cfg.piiKey, t.passportNumber),
-            passportLast4: t.passportNumber.slice(-4),
+            passportEnc: encrypt(cfg.piiKey, passport),
+            passportLast4: passport.slice(-4),
             nationality: t.nationality,
             dateOfBirth: t.dateOfBirth,
             verified: same ? prev.verified : false,
@@ -226,11 +258,14 @@ export async function bookingRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     const p = parse(z.object({ id: z.uuid(), position: z.coerce.number().int().min(1).max(19) }), req.params);
     const b = await loadBooking(db, user, p.id);
     if (b.status !== "draft") throw conflict("Booking is no longer editable");
-    const updated = await db
+    const updated = await db.transaction(async (tx) => {
+      await lockBooking(tx, user, b.id);
+      return tx
       .update(travelers)
       .set({ verified: true })
       .where(and(eq(travelers.bookingId, b.id), eq(travelers.position, p.position)))
       .returning({ position: travelers.position });
+    });
     if (!updated.length) throw notFound("Traveler");
     return { verified: true, provider: "mock" };
   });
@@ -246,11 +281,12 @@ export async function bookingRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     if (catalog.length !== codes.length) throw badRequest("Unknown amenity code");
     const amenTotal = catalog.reduce((s, a) => s + a.priceCents, 0);
     await db.transaction(async (tx) => {
+      const locked = await lockBooking(tx, user, b.id);
       await tx.delete(bookingAmenities).where(eq(bookingAmenities.bookingId, b.id));
       if (catalog.length) await tx.insert(bookingAmenities).values(catalog.map((a) => ({ bookingId: b.id, code: a.code, priceCents: a.priceCents })));
       await tx
         .update(bookings)
-        .set({ amenitiesCents: amenTotal, totalCents: b.flightCents + b.feesCents + amenTotal, specialRequests: body.specialRequests ?? null })
+        .set({ amenitiesCents: amenTotal, totalCents: locked.flightCents + locked.feesCents + amenTotal, specialRequests: body.specialRequests ?? null })
         .where(eq(bookings.id, b.id));
     });
     return bookingView(db, (await db.select().from(bookings).where(eq(bookings.id, b.id)))[0]!);
@@ -263,16 +299,21 @@ export async function bookingRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     const b = await loadBooking(db, user, id);
     if (b.status !== "draft") throw conflict("This booking has already been paid");
 
-    const [quote] = await db.select().from(quotes).where(eq(quotes.id, b.quoteId)).limit(1);
-    const qs = quote ? effectiveStatus(quote) : "expired";
-    if (qs !== "offered" && qs !== "countered") throw conflict("The quote has expired. Search again for a fresh price.");
-    const trav = await db.select().from(travelers).where(eq(travelers.bookingId, b.id));
-    if (trav.length !== b.passengers || trav.some((t) => !t.verified)) throw conflict("All travelers must be added and verified before payment");
-    if (body.method === "credits" && !(user.companyId && b.companyId === user.companyId && (user.companyRole === "admin" || user.companyRole === "booker"))) {
-      throw conflict("Flight credits are available to company admins and bookers only");
-    }
-
     await db.transaction(async (tx) => {
+      const [pointer] = await tx.select().from(quotes).where(eq(quotes.id, b.quoteId));
+      if (!pointer) throw conflict("Quote is unavailable");
+      const [request] = await tx.select().from(quoteRequests).where(eq(quoteRequests.id, pointer.requestId)).for("update");
+      const fresh = await lockBooking(tx, user, b.id);
+      const [quote] = await tx.select().from(quotes).where(eq(quotes.id, b.quoteId));
+      const qs = quote ? effectiveStatus(quote) : "expired";
+      if (request?.status !== "open" || (qs !== "offered" && qs !== "countered")) throw conflict("The quote is no longer available. Search again.");
+      if (quote!.priceCents !== fresh.flightCents) throw conflict("The quote price changed. Select the updated quote before payment.");
+      await availableAircraft(tx, fresh.aircraftId);
+      const trav = await tx.select().from(travelers).where(eq(travelers.bookingId, b.id));
+      if (trav.length !== fresh.passengers || trav.some((t) => !t.verified)) throw conflict("All travelers must be added and verified before payment");
+      if (body.method === "credits" && !(user.companyId && fresh.companyId === user.companyId && (user.companyRole === "admin" || user.companyRole === "booker"))) {
+        throw conflict("Flight credits are available to company admins and bookers only");
+      }
       // Claim the draft first so concurrent payment attempts cannot both succeed.
       const status = body.method === "wire" ? "pending_payment" : "confirmed";
       const claimed = await tx
@@ -334,6 +375,7 @@ export async function bookingRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
     if (b.status !== "confirmed") throw conflict("Ground transport can be added once the booking is confirmed");
     const chauffeur = CHAUFFEURS[b.ref.charCodeAt(3) % CHAUFFEURS.length]!;
     await db.transaction(async (tx) => {
+      await lockBooking(tx, user, b.id, "confirmed");
       await tx.delete(groundTransfers).where(eq(groundTransfers.bookingId, b.id));
       await tx.insert(groundTransfers).values({
         bookingId: b.id,

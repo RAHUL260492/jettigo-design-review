@@ -19,7 +19,7 @@ export async function meRoutes(app: FastifyInstance, { db, cfg }: Ctx) {
   app.patch("/me", async (req) => {
     const user = await requireUser(req, db, cfg.jwtSecret);
     const body = parse(
-      z.object({ name: z.string().trim().min(1).max(120).optional(), phone: z.string().trim().regex(/^\+?[0-9 ()-]{6,20}$/).optional() }),
+      z.object({ name: z.string().trim().min(1).max(120).optional(), phone: z.string().trim().regex(/^\+?[0-9 ()-]{6,20}$/).optional() }).refine((v) => Object.keys(v).length > 0, "Provide at least one field"),
       req.body,
     );
     const [u] = await db.update(users).set(body).where(eq(users.id, user.id)).returning();

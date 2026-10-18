@@ -20,7 +20,7 @@ export type Ctx = { db: Database["db"]; cfg: Config };
 export async function buildApp(cfg: Config, database: Database): Promise<FastifyInstance> {
   const app = Fastify({
     logger: cfg.env === "test" ? false : { level: cfg.env === "production" ? "info" : "debug", redact: ["req.headers.authorization"] },
-    trustProxy: true,
+    trustProxy: (_address, hop) => hop < cfg.trustProxyHops,
     bodyLimit: 256 * 1024,
   });
 
@@ -30,6 +30,7 @@ export async function buildApp(cfg: Config, database: Database): Promise<Fastify
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     maxAge: 600,
+    exposedHeaders: ["Content-Disposition"],
   });
   await app.register(rateLimit, { global: true, max: 300, timeWindow: "1 minute" });
 
@@ -42,7 +43,8 @@ export async function buildApp(cfg: Config, database: Database): Promise<Fastify
       const message = err instanceof Error ? err.message : "Bad request";
       return reply.status(status).send({ error: { code: status === 429 ? "rate_limited" : "bad_request", message } });
     }
-    req.log.error(err);
+    // Database errors may contain query parameters (PII); never serialize them.
+    req.log.error({ errorType: err instanceof Error ? err.name : "Error" }, "Request failed");
     return reply.status(500).send({ error: { code: "internal", message: "Something went wrong" } });
   });
   app.setNotFoundHandler((_req, reply) => reply.status(404).send({ error: { code: "not_found", message: "Route not found" } }));

@@ -63,7 +63,7 @@
   /* ---------- Template helpers ---------- */
   J.ic = (n, cls = "") => `<i data-lucide="${n}"${cls ? ` class="${cls}"` : ""}></i>`;
   J.ph = (src, alt = "", cls = "", style = "") =>
-    `<span class="ph ${cls}"${style ? ` style="${style}"` : ""}><img src="${IMG}${src}.jpg" alt="${alt}" loading="lazy" decoding="async"></span>`;
+    `<span class="ph ${cls}"${style ? ` style="${style}"` : ""}><img src="${IMG}${J.esc(src)}.jpg" alt="${J.esc(alt)}" loading="lazy" decoding="async"></span>`;
   J.money = (n) => "$" + Math.round(n).toLocaleString("en-US");
   J.esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M19.5 4h6v14.6c0 5.9-4 9.4-9.6 9.4-4.6 0-8.2-2.4-9.7-6.6l5.3-2.2c.8 2.1 2.3 3.3 4.3 3.3 2.4 0 3.7-1.5 3.7-4.3V4z"/><path fill="#B89E67" d="M2.5 12.4 26 7.2l-6.2 6.4L2.5 15.3z"/></svg>`;
@@ -161,7 +161,7 @@
       el.setAttribute("role", "status");
       document.body.appendChild(el);
     }
-    el.innerHTML = `${J.ic(icon)}<span>${msg}</span>`;
+    el.innerHTML = `${J.ic(icon)}<span>${J.live && J.live.on ? J.esc(msg) : msg}</span>`;
     J.icons(el);
     requestAnimationFrame(() => el.classList.add("show"));
     clearTimeout(toastTimer);
@@ -190,7 +190,7 @@
       try {
         await s.load();
       } catch (err) {
-        if (seq !== renderSeq) return;
+        if (seq !== renderSeq || (err && err.staleSession)) return;
         document.body.classList.remove("is-loading");
         if (err && err.redirect) {
           if (err.message) J.toast(err.message, "info");
@@ -199,6 +199,9 @@
         }
         if (err && err.status === 401) return J.live.toLogin(id);
         J.toast((err && err.message) || "Something went wrong", "circle-alert");
+        document.getElementById("app").innerHTML = `<main class="main"><p>Unable to load this screen.</p><button class="btn" id="retry-load">Try again</button><a href="#/home">Home</a></main>`;
+        document.getElementById("retry-load").onclick = render;
+        return;
       }
       if (seq !== renderSeq) return;
       document.body.classList.remove("is-loading");
@@ -264,9 +267,9 @@
   /* ---------- Shared visuals ---------- */
   // Line/area chart in a fixed viewBox so it scales without distortion.
   J.chart = (vals, labels, { prefix = "", max } = {}) => {
-    const top = max || Math.ceil(Math.max(...vals) * 1.15);
+    const top = max || Math.max(1, Math.ceil(Math.max(0, ...vals) * 1.15));
     const W = 600, H = 200;
-    const xp = (i) => (i * 100) / (vals.length - 1);
+    const xp = (i) => (i * 100) / Math.max(1, vals.length - 1);
     const yp = (v) => (1 - v / top) * 100;
     const pts = vals.map((v, i) => [(xp(i) * W) / 100, (yp(v) * H) / 100]);
     const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
