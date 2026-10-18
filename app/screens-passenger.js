@@ -31,12 +31,15 @@
       </div></header>
 
       <section class="hero">
-        <div class="hero-bg"><div class="cabin">${ph("cabin-hero", "Private jet cabin")}</div><div class="sky">${ph("jet-clouds", "Jet above the clouds at sunset")}</div><div class="desk">${ph("jet-tarmac", "Private jet on the runway")}</div></div>
+        <div class="hero-bg"><div class="cabin">${ph("cabin-hero", "Private jet cabin")}</div><div class="sky">${ph("jet-clouds", "Jet above the clouds at sunset")}</div></div>
         <div class="hero-in">
-          <span class="eyebrow">Private jets</span>
-          <h1><span class="soft">Premium.</span><br>Accessible.</h1>
-          <p>Your dedication deserves recognition. Charter a private jet in minutes, with a concierge on call around the clock.</p>
-          <div class="row hero-ctas gap-12"><a class="btn light round lg" href="#/fleet" style="min-width:150px">Discover</a><a class="btn round lg" href="#/route" style="min-width:150px">Book now</a></div>
+          <div class="hero-copy">
+            <span class="eyebrow">Private jets</span>
+            <h1><span class="soft">Premium.</span><br>Accessible.</h1>
+            <p>Your dedication deserves recognition. Charter a private jet in minutes, with a concierge on call around the clock.</p>
+            <div class="row hero-ctas gap-12"><a class="btn light round lg" href="#/fleet" style="min-width:150px">Discover</a><a class="btn round lg" href="#/route" style="min-width:150px">Book now</a></div>
+          </div>
+          <div class="hero-art">${ph("jet-hero", "Private jet on the runway")}<a class="hero-badge" href="#/fleet"><span class="dot"></span><span><b>Gulfstream G650</b><small>Available from London today</small></span></a></div>
           <div class="search-widget" role="search">
             <a class="sw" href="#/route"><div class="lbl">From</div><div class="val">London City (LCY)</div></a>
             <a class="sw" href="#/route"><div class="lbl">To</div><div class="val">Nice Côte d'Azur (NCE)</div></a>
