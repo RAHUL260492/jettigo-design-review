@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visual direction · Jettigo design review</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app/app.css?v=5"><link rel="stylesheet" href="deck/deck.css?v=5">
+</head>
+<body>
+  <div id="d-top"></div>
+  <main class="d-wrap">
+    <header class="d-head">
+      <span class="eyebrow"><i></i>Phase 2 · UI design &amp; prototyping</span>
+      <h1>Visual direction: quiet luxury</h1>
+      <p>Jettigo should feel like stepping into a private terminal: calm, orderly and impeccably serviced. Deep navy carries authority, muted gold marks what is premium, and generous ivory space lets content breathe.</p>
+    </header>
+
+    <section class="d-sec" style="padding-top:0">
+      <div class="d-sec-h"><h2>Brand mark</h2></div>
+      <div class="d-grid c3">
+        <div class="d-card" style="display:grid;place-items:center;min-height:200px"><span class="brand lg" id="b1"></span></div>
+        <div class="d-card" style="display:grid;place-items:center;min-height:200px;background:var(--navy-950);border-color:var(--navy-950)"><span class="brand lg light" id="b2"></span></div>
+        <div class="d-card stack gap-12" style="justify-content:center">
+          <div class="row gap-16"><img src="assets/favicon.svg" alt="Jettigo app icon" width="64" height="64" style="border-radius:16px;box-shadow:var(--shadow-lg)"><img src="assets/favicon.svg" alt="" width="40" height="40" style="border-radius:10px"><img src="assets/favicon.svg" alt="" width="24" height="24" style="border-radius:6px"></div>
+          <p class="d-small d-muted">The "J" is crossed by a swept gold wing, the moment of take-off. "go" is set in gold to underline the promise: book it and go.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><h2>Design principles</h2></div>
+      <div class="d-grid c4 d-principles">
+        <div class="d-card"><b>Quiet luxury</b><p class="d-small d-muted mt-8">Restraint over decoration. Hairline borders, soft depth, gold used sparingly so it always means "premium".</p></div>
+        <div class="d-card"><b>Clarity at speed</b><p class="d-small d-muted mt-8">Booking a jet must be faster than a phone call. One primary action per screen, totals always visible.</p></div>
+        <div class="d-card"><b>Calm confidence</b><p class="d-small d-muted mt-8">Live status, countdowns and tracking replace uncertainty. The traveler is never left guessing.</p></div>
+        <div class="d-card"><b>One system</b><p class="d-small d-muted mt-8">Passenger, corporate and partner products share tokens and components, so the platform feels like one brand.</p></div>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Color palette</h2><p class="mt-8">A monochrome navy foundation with a single metallic accent. Status colors are muted to sit comfortably next to gold.</p></div></div>
+      <div class="d-swatches" id="sw"></div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Surfaces by context</h2><p class="mt-8">The background tells users what kind of moment they are in.</p></div></div>
+      <div class="d-grid c3">
+        <div class="d-surface" style="background:var(--ivory)"><span class="label">Ivory · #FDFCFB</span><div><b style="font-size:18px">Booking funnel</b><p class="d-small d-muted mt-8">Warm and tactile, reduces eye strain while filling in details.</p></div></div>
+        <div class="d-surface" style="background:#fff"><span class="label">White · #FFFFFF</span><div><b style="font-size:18px">Dashboards &amp; data</b><p class="d-small d-muted mt-8">Maximum clarity for invoices, tables and analytics.</p></div></div>
+        <div class="d-surface" style="background:var(--night);color:#fff;border-color:var(--night)"><span class="label" style="color:var(--gold-200)">Night · #1A2229</span><div><b style="font-size:18px">Immersive &amp; live</b><p class="d-small mt-8" style="color:#aab4bf">Login, live tracking, day of travel. Frosted glass panels over dark.</p></div></div>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Typography</h2><p class="mt-8">Inter throughout: systematic, highly legible at small sizes and on any screen. Tight negative tracking on headlines gives an editorial, premium feel. Labels use uppercase with wide tracking, a nod to aviation instrument panels.</p></div></div>
+      <div class="d-card" style="padding:8px 24px">
+        <div class="d-type">
+          <div><span class="spec">Display · 60/64 · 650 · −3%</span><span style="font-size:clamp(36px,5vw,60px);font-weight:650;letter-spacing:-0.03em;line-height:1.05">Premium. Accessible.</span></div>
+          <div><span class="spec">Headline 1 · 32/40 · 650 · −2%</span><span style="font-size:32px;font-weight:650;letter-spacing:-0.02em">Choose your jet</span></div>
+          <div><span class="spec">Headline 2 · 20/26 · 600</span><span style="font-size:20px;font-weight:600">Passengers &amp; baggage</span></div>
+          <div><span class="spec">Body · 16/26 · 400</span><span style="font-size:16px;line-height:1.6;color:var(--text-2)">All quotes include crew, fuel, landing fees and VAT. Prices are held for 30 minutes while you decide.</span></div>
+          <div><span class="spec">Label · 12/16 · 600 · +8% · caps</span><span class="label">Departure FBO · Tail G-JTGO</span></div>
+          <div><span class="spec">Numerals · tabular</span><span style="font-size:28px;font-weight:650;font-variant-numeric:tabular-nums">$20,190 · 2h 14m 59s</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Interface elements</h2><p class="mt-8">A preview of the core building blocks. These are live components from the prototype. The full UI kit is a Phase 3 deliverable.</p></div></div>
+      <div class="d-grid c2">
+        <div class="d-card stack gap-16"><span class="label">Buttons</span>
+          <div class="row wrap gap-12"><button class="btn">Confirm booking</button><button class="btn gold">Book now</button><button class="btn ghost">Modify search</button></div>
+          <div class="row wrap gap-12" style="background:var(--night);padding:16px;border-radius:12px"><button class="btn glass">Sign in with SSO</button><button class="btn light round">Discover</button><button class="btn gold round">Get started</button></div>
+        </div>
+        <div class="d-card stack gap-16"><span class="label">Inputs &amp; selection</span>
+          <input class="input" placeholder="Email or phone number">
+          <div class="row wrap gap-12"><div class="seg"><button class="on">One way</button><button>Return</button><button>Multi-city</button></div><label class="switch" aria-label="Example toggle"><input type="checkbox" checked><span></span></label>
+            <div class="stepper"><button data-d="-" aria-label="Fewer"><i data-lucide="minus"></i></button><output>4</output><button data-d="+" aria-label="More"><i data-lucide="plus"></i></button></div></div>
+        </div>
+        <div class="d-card stack gap-16"><span class="label">Status &amp; tags</span>
+          <div class="row wrap gap-8"><span class="pill green"><i data-lucide="circle-check"></i> Paid</span><span class="pill amber"><i data-lucide="clock-3"></i> Pending</span><span class="pill blue">Upcoming</span><span class="pill gold">Recommended</span><span class="elite"><i data-lucide="crown"></i> Elite</span><span class="chip">Ultra-long range</span></div>
+        </div>
+        <div class="d-card stack gap-16"><span class="label">Progress</span>
+          <div class="progress"><div class="st done"><span class="dot"><i data-lucide="check"></i></span>Route</div><div class="st done"><span class="dot"><i data-lucide="check"></i></span>Jet</div><div class="st on"><span class="dot"></span>Travelers</div><div class="st"><span class="dot"></span>Payment</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Iconography</h2><p class="mt-8">Line icons at a 1.75px stroke: light enough to feel refined, strong enough to read at 16px. Gold tint is reserved for premium services.</p></div></div>
+      <div class="d-card row wrap gap-24" id="icons" style="padding:24px"></div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Photography</h2><p class="mt-8">Natural light, real cabins and aircraft in their element. Warm interiors balance the cool navy UI. Avoid stock clichés and heavy filters.</p></div></div>
+      <div class="d-photo">
+        <span class="ph"><img src="assets/img/jet-tarmac.jpg" alt="Jet on the runway"></span>
+        <span class="ph"><img src="assets/img/cabin-wide.jpg" alt="Cabin interior"></span>
+        <span class="ph"><img src="assets/img/jet-clouds.jpg" alt="Jet above clouds"></span>
+        <span class="ph"><img src="assets/img/referral.jpg" alt="Guests on board"></span>
+        <span class="ph"><img src="assets/img/hangar.jpg" alt="Crew in the hangar"></span>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>From exploration to one system</h2><p class="mt-8">Early concepts explored three looks: light minimal, dark glass and navy-and-gold. The final direction keeps the best of each.</p></div></div>
+      <div class="d-grid c3">
+        <div class="d-card"><b>Kept: navy &amp; gold</b><p class="d-small d-muted mt-8">The strongest premium signal. Navy is primary everywhere; stray blues from early concepts were removed.</p></div>
+        <div class="d-card"><b>Kept: glass, for live moments</b><p class="d-small d-muted mt-8">Dark frosted glass is reserved for immersive, real-time screens so it stays special.</p></div>
+        <div class="d-card"><b>Kept: light minimal, for tasks</b><p class="d-small d-muted mt-8">Booking and admin stay on ivory and white for focus and legibility.</p></div>
+      </div>
+    </section>
+
+    <div id="pager"></div>
+  </main>
+  <div id="foot"></div>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="deck/deck.js?v=5"></script>
+  <script>
+    D.top("visual.html");
+    document.getElementById("b1").outerHTML = D.BRAND.replace('class="brand"', 'class="brand lg"');
+    document.getElementById("b2").outerHTML = D.BRAND.replace('class="brand"', 'class="brand lg light"');
+    const SW = [
+      ["Deep Navy", "#202A36", "Primary actions, headers"], ["Ink Navy", "#0B1621", "Text, hover states"], ["Muted Gold", "#B89E67", "Premium accents, highlights"], ["Gold Tint", "#F6EFE0", "Premium backgrounds"],
+      ["Ivory", "#FDFCFB", "Booking surfaces"], ["White", "#FFFFFF", "Cards, dashboards"], ["Slate 200", "#E2E8F0", "Borders, dividers"], ["Slate 500", "#64748B", "Secondary text"],
+      ["Night", "#1A2229", "Immersive screens"], ["Night Glass", "#232D36", "Frosted panels"], ["Success", "#2F7D57", "Confirmed, paid"], ["Alert", "#B42318", "Errors, timers"],
+    ];
+    document.getElementById("sw").innerHTML = SW.map(([n, h, u]) => `<div class="d-sw"><div class="c" style="background:${h}"></div><div class="t"><b>${n}</b><code>${h}</code><div class="d-muted" style="margin-top:2px">${u}</div></div></div>`).join("");
+    document.getElementById("icons").innerHTML = ["plane-takeoff", "plane-landing", "calendar-days", "users", "luggage", "armchair", "globe-2", "shield-check", "crown", "concierge-bell", "car-front", "message-circle", "wallet", "file-text", "map-pin", "bell"].map((n, i) => `<i data-lucide="${n}" style="width:26px;height:26px;${i === 8 || i === 9 ? "color:var(--gold-600)" : ""}"></i>`).join("");
+    // Make the live stepper/segmented/switch samples interactive.
+    document.addEventListener("click", (e) => {
+      const seg = e.target.closest(".seg button"); if (seg) seg.parentElement.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === seg));
+      const sb = e.target.closest(".stepper button"); if (sb) { const o = sb.parentElement.querySelector("output"); o.textContent = Math.max(1, +o.textContent + (sb.dataset.d === "+" ? 1 : -1)); }
+    });
+    document.getElementById("pager").outerHTML = D.pager("visual.html");
+    document.getElementById("foot").outerHTML = D.foot();
+    D.icons();
+  </script>
+</body>
+</html>

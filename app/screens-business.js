@@ -1,0 +1,370 @@
+/* Jettigo — corporate console + partner / operator portal */
+(function () {
+  const { ic, ph, money, brand } = J;
+
+  /* =============== Corporate dashboard =============== */
+  const TEAM = [
+    { n: "Sarah Lee", r: "Administrator", av: "av-sarah" },
+    { n: "John Kim", r: "Traveler", av: "av-john" },
+    { n: "Mark Davis", r: "Traveler", av: "av-mark" },
+  ];
+  J.screen("corp", {
+    title: "Jettigo Corporate",
+    sub: "Thompson Holdings",
+    doc: "Corporate management dashboard",
+    group: "Corporate",
+    shell: "corporate",
+    nav: "corp",
+    back: "login",
+    body: () => `<div class="split">
+      <div class="stack gap-24">
+        <div class="card navy pad-lg stack gap-8" style="border-radius:16px;background:linear-gradient(135deg,#202a36,#0b1621)">
+          <div class="row between"><span class="label">Flight credits &amp; team</span>${ic("bar-chart-3", "gold")}</div>
+          <div class="row wrap gap-8" style="align-items:baseline"><span class="muted">Total balance</span><b style="font-size:34px;letter-spacing:-0.02em" class="tnum">$1,450,000</b></div>
+          <div class="small muted">Active team members: <b style="color:#fff">24</b> across all roles</div>
+          <div class="row gap-8 mt-8"><a class="btn gold sm" href="#/route">${ic("plus")} Book for team</a><button class="btn glass sm" data-toast="Top-up request sent to finance" data-icon="wallet">Top up credits</button></div>
+        </div>
+        <div class="g4 gap-12">
+          <div class="card kpi"><div class="xs faint">Spent (Apr–Sep)</div><div class="n">$520k</div><div class="d">▲ 12% vs last half</div></div>
+          <div class="card kpi"><div class="xs faint">Flights this quarter</div><div class="n">18</div><div class="d">▲ 4</div></div>
+          <div class="card kpi"><div class="xs faint">Avg. cost per flight</div><div class="n">$28.9k</div><div class="d" style="color:var(--text-3)">Stable</div></div>
+          <div class="card kpi"><div class="xs faint">Carbon offset</div><div class="n">100%</div><div class="d">All flights</div></div>
+        </div>
+        <div class="card pad-lg"><div class="row between"><div><h2 class="h2">Spending analytics</h2><div class="small faint">Apr – Sep 2026, $k</div></div><div class="right"><div class="xs faint">Total spent</div><b>$520k</b></div></div>
+          <div class="mt-16">${J.chart([42, 68, 96, 74, 118, 122], ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], { prefix: "" })}</div>
+        </div>
+      </div>
+      <div class="stack gap-24">
+        <div class="card pad-lg"><div class="row between"><h2 class="h2">Travel activity</h2><a class="small link" href="#/invoices">All trips</a></div>
+          <div class="list mt-8">
+            ${[["av-mark", "Mark Davis", "Upcoming", "12 Nov", "NYC → LAX", "Learjet 75"], ["av-sarah", "Sarah Lee", "Completed", "05 Oct", "LON → CDG", "Global 6000"], ["av-john", "John Kim", "Upcoming", "18 Nov", "DXB → HKG", "Challenger 350"]]
+              .map((r) => `<div class="person"><span class="avatar">${ph(r[0], r[1])}</span><div class="who"><span class="pill ${r[2] === "Upcoming" ? "blue" : "green"}" style="height:20px;font-size:11px">${r[2]}</span><b>${r[1]}</b></div><div class="right"><b class="small">${r[4]}</b><div class="xs faint">${r[3]} · ${r[5]}</div></div></div>`).join("")}
+          </div>
+        </div>
+        <div class="card pad-lg"><div class="row between"><h2 class="h2">Team management</h2><span class="small faint">24 members</span></div>
+          <div class="list mt-8" id="team">
+            ${TEAM.map((t) => `<div class="person"><span class="avatar">${ph(t.av, t.n)}</span><div class="who"><b>${t.n}</b></div><span class="pill">${t.r}</span><button class="iconbtn" aria-label="Manage ${t.n}" data-toast="Permissions for ${t.n}" data-icon="user-cog">${ic("square-pen")}</button></div>`).join("")}
+          </div>
+          <button class="btn block mt-16" data-act="add">${ic("user-plus")} Add new traveler</button>
+          <form id="addf" class="stack gap-12 mt-16" hidden><input class="input" id="nn" placeholder="Full name" required><div class="seg block sm"><button type="button" class="on">Traveler</button><button type="button">Booker</button><button type="button">Admin</button></div><button class="btn ghost block">Send invitation</button></form>
+        </div>
+      </div>
+    </div>`,
+    init(root) {
+      root.querySelector('[data-act="add"]').addEventListener("click", () => {
+        root.querySelector("#addf").hidden = false;
+        root.querySelector("#nn").focus();
+      });
+      root.querySelector("#addf").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const n = J.esc(root.querySelector("#nn").value);
+        root.querySelector("#team").insertAdjacentHTML("beforeend", `<div class="person"><span class="avatar" style="display:grid;place-items:center;background:var(--gold-100);color:var(--gold-700);font-weight:600">${n.charAt(0)}</span><div class="who"><b>${n}</b><span>Invitation sent</span></div><span class="pill amber">Pending</span></div>`);
+        e.target.reset();
+        e.target.hidden = true;
+        J.toast(`Invitation sent to ${n}`, "send");
+      });
+    },
+  });
+
+  /* =============== Invoices & reports =============== */
+  const INV = [
+    ["26 Oct 2026", "INV-8829", 24500, "Paid", "green", "circle-check"],
+    ["15 Oct 2026", "INV-8825", 18750, "Pending", "amber", "clock-3"],
+    ["10 Oct 2026", "INV-8821", 31200, "Processing", "blue", "refresh-cw"],
+  ];
+  J.screen("invoices", {
+    title: "Financial overview",
+    doc: "Corporate invoicing & reports",
+    group: "Corporate",
+    shell: "corporate",
+    nav: "invoices",
+    back: "corp",
+    body: () => `<div class="seg block" id="tabs" style="max-width:420px"><button class="on" data-v="inv">Invoices</button><button data-v="rep">Reports</button></div>
+      <div class="split mt-24">
+        <div class="stack gap-12" id="p-inv">
+          ${INV.map((r) => `<div class="card row between"><div class="stack gap-8"><div class="xs faint">${r[0]} · ${r[1]}</div><div class="row gap-12"><b style="font-size:22px" class="tnum">${money(r[2])}.00</b><span class="pill ${r[4]}">${ic(r[5])} ${r[3]}</span></div></div><button class="sq-btn ghost" aria-label="Download ${r[1]}" data-toast="${r[1]}.pdf downloaded" data-icon="download">${ic("file-down")}</button></div>`).join("")}
+          <div class="card pad-lg"><h2 class="h2">Quarterly spending</h2><div class="mt-16">${J.chart([18.4, 24.75, 31.3], ["Aug", "Sep", "Oct"], { prefix: "" })}</div><div class="row between small mt-8"><span class="muted">Total <b style="color:var(--text)">$74,450.00</b></span><span class="muted">Avg. monthly <b style="color:var(--text)">$24,816.67</b></span></div></div>
+        </div>
+        <div class="stack gap-12" id="p-rep" hidden>
+          ${[["Q3 2026 travel summary", "Trips, spend and CO₂ by department"], ["Traveler activity", "Per-person flights and policy exceptions"], ["VAT reclaim pack", "Invoices grouped by jurisdiction"]].map((r) => `<div class="card row between"><div class="row gap-12"><span class="folder">${ic("file-bar-chart")}</span><div><b>${r[0]}</b><div class="small muted">${r[1]}</div></div></div><button class="sq-btn ghost" aria-label="Download" data-toast="Report exported" data-icon="download">${ic("download")}</button></div>`).join("")}
+        </div>
+        <div class="card pad-lg stack gap-12 sticky"><h2 class="h2">Generate custom report</h2>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Start date</span><input class="input" type="date" value="2026-07-01"></label><label class="field"><span>End date</span><input class="input" type="date" value="2026-09-30"></label></div>
+          <label class="field"><span>Group by</span><select class="input"><option>Department</option><option>Traveler</option><option>Aircraft category</option></select></label>
+          <span class="small muted">Export format</span>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><button class="btn" data-toast="Report_Q3_2026.pdf exported" data-icon="file-down">Export PDF</button><button class="btn ghost" data-toast="Report_Q3_2026.csv exported" data-icon="sheet">Export CSV</button></div>
+        </div>
+      </div>`,
+    init(root) {
+      root.querySelector("#tabs").addEventListener("seg", (e) => {
+        root.querySelector("#p-inv").hidden = e.detail !== "inv";
+        root.querySelector("#p-rep").hidden = e.detail !== "rep";
+      });
+    },
+  });
+
+  /* =============== Tax & compliance =============== */
+  const DOCS = [
+    ["Q3 VAT Certificate.pdf", "Today, 10:30 · 1.2 MB"],
+    ["Flight Manifest – G-JTGO.pdf", "Yesterday · 850 KB"],
+    ["US Entry Permit.pdf", "25 Oct · 2.5 MB"],
+    ["2025 Annual Tax Statement.pdf", "25 Oct · 4.1 MB"],
+  ];
+  J.screen("documents", {
+    title: "Tax &amp; compliance",
+    doc: "Tax & compliance documentation",
+    group: "Corporate",
+    shell: "corporate",
+    nav: "documents",
+    back: "corp",
+    body: () => `<label class="search">${ic("search")}<input id="q" placeholder="Search documents" aria-label="Search documents"></label>
+      <div class="split mt-24">
+        <div><h2 class="h2">Recent documents</h2>
+          <div class="list card mt-12" style="padding:0 16px" id="docs">
+            ${DOCS.map((d) => `<div class="row between doc"><div class="row gap-12" style="min-width:0">${ic("file-text", "faint")}<div style="min-width:0"><b class="small" style="font-size:15px">${d[0]}</b><div class="xs faint">${d[1]}</div></div></div><div class="row gap-8"><button class="sq-btn" aria-label="Download" data-toast="${d[0]} downloaded" data-icon="download">${ic("download")}</button><button class="sq-btn" aria-label="Share" data-toast="Secure link copied" data-icon="link">${ic("share")}</button></div></div>`).join("")}
+            <p class="small muted" id="none" hidden>No documents match your search.</p>
+          </div>
+        </div>
+        <div><h2 class="h2">Document categories</h2>
+          <div class="list mt-12">
+            ${[["VAT certificates", 12], ["Flight manifests", 8], ["International permits", 4], ["Annual tax statements", 2]].map((c) => `<button class="row gap-12" style="width:100%;text-align:left" data-toast="Opening ${c[0]}" data-icon="folder-open"><span class="folder">${ic("folder")}</span><b class="grow">${c[0]}</b><span class="small faint">${c[1]} documents</span>${ic("chevron-right", "faint")}</button>`).join("")}
+          </div>
+        </div>
+      </div>`,
+    init(root) {
+      root.querySelector("#q").addEventListener("input", (e) => {
+        const q = e.target.value.toLowerCase();
+        let shown = 0;
+        root.querySelectorAll(".doc").forEach((d) => {
+          const hit = d.textContent.toLowerCase().includes(q);
+          d.hidden = !hit;
+          shown += hit;
+        });
+        root.querySelector("#none").hidden = shown > 0;
+      });
+    },
+  });
+
+  /* =============== Partner welcome =============== */
+  J.screen("partner", {
+    doc: "Vendor: welcome & role selection",
+    group: "Partners",
+    full: () => `<div class="app dark no-tabs" style="background:radial-gradient(100% 60% at 50% 0%,#2a3644,transparent),var(--night)">
+      <header class="mnav" style="position:static"><div class="mnav-in"><a href="#/home">${brand("light")}</a><a class="btn ghost sm round" href="#/op-login">Operator login</a></div></header>
+      <main class="main" style="padding-bottom:40px"><div class="split even" style="align-items:center">
+        <div class="banner-img" style="border-radius:20px;margin:0">${ph("hangar", "Jet and crew in a hangar", "", "aspect-ratio:4/3")}<div class="cap" style="padding:24px"><h1 class="h1">Partner with Jettigo</h1><p style="opacity:.8">Join an exclusive network of global aviation partners.</p></div></div>
+        <div class="stack gap-16">
+          <span class="label">Choose your role</span>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">
+            <button class="role-card on" data-role="operator">${ic("plane")}<b>Operator</b><p>Jet owner or charter company. List aircraft in our global fleet.</p></button>
+            <button class="role-card" data-role="provider">${ic("cog")}<b>Service provider</b><p>Catering, transport, FBO. Offer ground and in-flight services.</p></button>
+          </div>
+          <div class="glass-card list" style="padding:4px 16px">
+            <div class="row gap-12">${ic("trending-up", "gold")}<span class="small">Qualified demand from vetted travelers</span></div>
+            <div class="row gap-12">${ic("banknote", "gold")}<span class="small">Payouts within 48 hours of each flight</span></div>
+            <div class="row gap-12">${ic("shield-check", "gold")}<span class="small">Verification in under 48 hours</span></div>
+          </div>
+          <a class="btn lg block" href="#/verify" style="border-radius:999px">Get started</a>
+          <p class="xs center" style="color:var(--text-3)">By continuing, you agree to our Terms and Privacy Policy.</p>
+        </div>
+      </div></main>
+    </div>`,
+    init(root) {
+      root.querySelectorAll("[data-role]").forEach((b) =>
+        b.addEventListener("click", () => {
+          J.state.role = b.dataset.role;
+          root.querySelectorAll("[data-role]").forEach((x) => x.classList.toggle("on", x === b));
+        })
+      );
+    },
+  });
+
+  /* =============== Business verification =============== */
+  const vprog = (on) => `<div class="progress">${["Profile", "Documents", "Fleet & services"].map((l, i) => `<div class="st ${i < on ? "done" : i === on ? "on" : ""}"><span class="dot">${i < on ? ic("check") : ""}</span>${l}</div>`).join("")}</div>`;
+  const drop = (id, title, icon) => `<button class="drop" data-drop="${id}">${ic(icon)}<b>${title}</b><span>Drag and drop or browse files</span></button>`;
+  J.screen("verify", {
+    title: "Business verification",
+    doc: "Vendor: business verification",
+    group: "Partners",
+    shell: "partner",
+    nav: "verify",
+    back: "partner",
+    cta: () => `<a class="btn block lg" href="#/rates">Continue</a>`,
+    body: () => `${vprog(1)}
+      <div class="split mt-24">
+        <div class="card pad-lg stack gap-16">
+          <label class="field"><span>Company name</span><input class="input" placeholder="Enter company name" value="Riviera Air Charter Ltd"></label>
+          <div class="g2 gap-12"><label class="field"><span>Air operator certificate (AOC) no.</span><input class="input" placeholder="Enter license number"></label><label class="field"><span>Country of registration</span><select class="input"><option>United Kingdom</option><option>France</option><option>India</option><option>United Arab Emirates</option></select></label></div>
+          <label class="field"><span>Years in operation</span><input class="input" type="number" placeholder="e.g. 10"></label>
+        </div>
+        <div class="stack gap-12"><h2 class="h2">Document upload</h2>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">${drop("aoc", "Operating certificate", "file-text")}${drop("ins", "Insurance coverage", "upload")}</div>
+          <div class="card row gap-12" style="background:var(--surface-2)">${ic("lock", "gold")}<p class="small muted">Documents are encrypted and only reviewed by the Jettigo compliance team.</p></div>
+        </div>
+      </div>`,
+    init(root) {
+      root.querySelectorAll("[data-drop]").forEach((d) =>
+        d.addEventListener("click", () => {
+          if (d.classList.contains("done")) return;
+          d.innerHTML = `<span class="btn is-loading sm ghost" style="border:0">Uploading</span>`;
+          J.later(800, () => {
+            d.classList.add("done");
+            d.innerHTML = `${ic("circle-check")}<b>${d.dataset.drop === "aoc" ? "AOC_RivieraAir.pdf" : "Insurance_2026.pdf"}</b><span>Uploaded · 2.1 MB</span>`;
+            J.icons(d);
+          });
+        })
+      );
+    },
+  });
+
+  /* =============== Fleet & services setup =============== */
+  J.screen("rates", {
+    title: "Fleet &amp; services",
+    sub: "Step 3 of 3",
+    doc: "Vendor: service & rates setup",
+    group: "Partners",
+    shell: "partner",
+    nav: "rates",
+    back: "verify",
+    cta: () => `<button class="btn block lg" data-act="submit">Submit for review</button>`,
+    body: () => `${vprog(2)}
+      <div class="split mt-24">
+        <div class="stack gap-12"><div class="row between"><h2 class="h2">For aircraft operators</h2><div class="seg sm" id="kind"><button class="on">Aircraft</button><button>Helicopter</button></div></div>
+          <div class="card pad-lg stack gap-16" id="aircraft">
+            <b style="font-size:18px">Add your first aircraft</b>
+            <label class="field"><span>Model name</span><input class="input" placeholder="e.g. Gulfstream G650"></label>
+            <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Tail number</span><input class="input" placeholder="e.g. G-RVRA"></label><label class="field"><span>Seating capacity</span><input class="input" type="number" placeholder="e.g. 12"></label></div>
+            <label class="field"><span>Base hourly rate</span><div class="affix"><b>$</b><input class="input" inputmode="numeric" placeholder="5,000"></div></label>
+            <div class="field"><span>Cabin dimensions (ft)</span><div class="g3 gap-8" style="grid-template-columns:repeat(3,1fr)"><input class="input" placeholder="Length"><input class="input" placeholder="Width"><input class="input" placeholder="Height"></div></div>
+            <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Baggage capacity</span><input class="input" placeholder="Standard bags"></label><div class="field"><span>Max total weight</span><div class="row gap-8"><input class="input" placeholder="0"><div class="seg sm dark-on"><button class="on">KG</button><button>LBS</button></div></div></div></div>
+            <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">${drop("ext", "Exterior photo", "image-up")}${drop("int", "Interior photo", "image-up")}</div>
+          </div>
+          <button class="btn ghost block" data-toast="Second aircraft form added" data-icon="plus">${ic("plus")} Add another aircraft</button>
+        </div>
+        <div class="stack gap-12"><h2 class="h2">For service providers</h2>
+          <div class="card list" style="padding:0 16px">
+            ${[["utensils-crossed", "In-flight catering"], ["car-front", "Ground transportation"], ["concierge-bell", "Concierge services"], ["warehouse", "FBO &amp; handling"]].map((s) => `<div class="row between"><div class="row gap-12">${ic(s[0], "faint")}<span>${s[1]}</span></div><label class="switch" aria-label="${s[1]}"><input type="checkbox"><span></span></label></div>`).join("")}
+          </div>
+          <p class="small faint center">Jettigo reviews every partner within 48 hours to ensure premium standards.</p>
+        </div>
+      </div>`,
+    init(root) {
+      root.querySelectorAll("[data-drop]").forEach((d) =>
+        d.addEventListener("click", () => {
+          d.classList.add("done");
+          d.innerHTML = `${ic("circle-check")}<b>${d.dataset.drop === "ext" ? "exterior.jpg" : "cabin.jpg"}</b><span>Uploaded</span>`;
+          J.icons(d);
+        })
+      );
+      root.querySelector('[data-act="submit"]').addEventListener("click", (e) => {
+        e.currentTarget.classList.add("is-loading");
+        J.later(900, () => {
+          J.toast("Application submitted. We'll review within 48 hours.", "send");
+          J.later(1400, () => J.go("op-login"));
+        });
+      });
+    },
+  });
+
+  /* =============== Operator secure login =============== */
+  J.screen("op-login", {
+    doc: "Operator portal: secure login",
+    group: "Partners",
+    full: () => `<div class="auth">
+      <div class="auth-card">
+        <a href="#/home" style="align-self:center">${brand("light lg", "Operators")}</a>
+        <div class="stack gap-8 center" style="margin:8px 0"><h1 class="h1">Secure login</h1><p style="opacity:.7">Authentication for jet operators</p></div>
+        <div class="card stack gap-12" style="background:#fff;color:var(--ink);padding:20px" id="op-form">
+          <div id="op-cred" class="stack gap-12">
+            <label class="field"><span>Email</span><input class="input" style="background:var(--ivory);color:var(--ink);border-color:var(--line-2)" value="ops@rivieraair.com" autocomplete="username"></label>
+            <label class="field"><span>Password</span><div style="position:relative"><input class="input" id="pw" type="password" style="background:var(--ivory);color:var(--ink);border-color:var(--line-2);padding-right:48px" value="hunter2-demo" autocomplete="current-password"><button class="iconbtn" data-act="eye" type="button" aria-label="Show password" style="position:absolute;right:2px;top:3px;color:var(--slate-600)">${ic("eye")}</button></div></label>
+            <button class="btn block lg round" data-act="signin">Sign in</button>
+          </div>
+          <div id="op-2fa" class="stack gap-12" hidden>
+            <b>Two-factor authentication</b><p class="small" style="color:var(--slate-600)">Enter the code from your authenticator app.</p>
+            <div class="otp">${[3, 8, 1, 5, 0, 2].map((d) => `<input class="input" style="background:var(--ivory);color:var(--ink);border-color:var(--line-2)" value="${d}" maxlength="1" inputmode="numeric" aria-label="Digit">`).join("")}</div>
+            <button class="btn block lg round" data-act="verify">Verify</button>
+          </div>
+        </div>
+        <p class="center small" style="opacity:.75">${ic("shield-check", "gold")} 2FA required for enhanced security</p>
+        <button class="small" style="opacity:.7;align-self:center" data-toast="Reset link sent to ops@rivieraair.com" data-icon="mail">Forgot password?</button>
+        <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn glass round" href="#/partner">Become a partner</a><button class="btn glass round" data-toast="Application status: under review" data-icon="hourglass">Application status</button></div>
+      </div>
+    </div>`,
+    init(root) {
+      root.addEventListener("click", (e) => {
+        const a = e.target.closest("[data-act]");
+        if (!a) return;
+        if (a.dataset.act === "eye") {
+          const pw = root.querySelector("#pw");
+          pw.type = pw.type === "password" ? "text" : "password";
+        }
+        if (a.dataset.act === "signin") {
+          a.classList.add("is-loading");
+          J.later(600, () => { root.querySelector("#op-cred").hidden = true; root.querySelector("#op-2fa").hidden = false; });
+        }
+        if (a.dataset.act === "verify") {
+          a.classList.add("is-loading");
+          J.later(600, () => J.go("quotes"));
+        }
+      });
+    },
+  });
+
+  /* =============== Operator quote hub =============== */
+  J.screen("quotes", {
+    title: "Quote requests",
+    doc: "Operator: quote & response hub",
+    group: "Partners",
+    shell: "partner",
+    nav: "quotes",
+    back: "op-login",
+    action: () => `<button class="iconbtn" aria-label="Notifications" data-toast="2 new requests in the last hour" data-icon="bell">${ic("bell")}</button>`,
+    body: () => `<div class="split">
+      <div class="stack gap-16" id="req">
+        <div class="row between wrap"><h2 class="h2" style="margin:0">New booking request</h2><span class="timer">${ic("timer")} <span id="tm">14:22</span> remaining</span></div>
+        <div class="card stack gap-12">
+          <div class="row between wrap"><div class="row gap-12"><b style="font-size:20px">LCY</b>${ic("arrow-right", "faint")}<b style="font-size:20px">NCE</b></div><div class="row gap-12 small"><span>Thu 29 Oct 2026</span><span class="row gap-8">${ic("clock-3")} 10:00</span></div></div>
+          <div class="divider" style="margin:0"></div>
+          <div class="row gap-24 wrap small"><span class="row gap-8">${ic("user")} 4 passengers</span><span class="row gap-8">${ic("luggage")} 4 bags, 80 kg</span><span class="row gap-8">${ic("crown")} Gold member</span></div>
+        </div>
+        <div class="stack gap-8"><h3 class="h3">Requested aircraft</h3>
+          <div class="card row gap-16">${ph("jet-latitude", "Citation Latitude", "", "width:120px;height:72px;border-radius:8px;flex:none")}<div><b style="font-size:17px">Citation Latitude</b><div class="small muted">Tail G-RVRA · Range 2,700 nm</div><span class="pill green mt-8">${ic("check")} Available</span></div></div>
+        </div>
+        <div class="stack gap-8" id="actions"><h3 class="h3">Your response</h3>
+          <button class="btn block lg" data-act="accept">Accept at standard rate $12,500</button>
+          <form class="op-action" id="counter"><b>Counter offer</b><div class="row gap-8"><div class="affix"><b>$</b><input class="input" id="cv" inputmode="numeric" placeholder="Enter price"></div><button class="sq-btn" aria-label="Send counter offer">${ic("send-horizontal")}</button></div></form>
+          <div class="op-action"><b>Decline request</b><select id="decl" aria-label="Decline reason"><option value="">Select reason</option><option>Aircraft unavailable</option><option>Crew duty limits</option><option>Airport restrictions</option></select></div>
+        </div>
+        <div class="card stack gap-8 center" id="done" hidden style="padding:28px"><span class="check-big">${ic("check")}</span><b style="font-size:18px" id="done-t">Quote sent</b><p class="small muted" id="done-d">The traveler has been notified.</p></div>
+      </div>
+      <div class="stack gap-16">
+        <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><div class="card kpi"><div class="xs faint">Win rate (30d)</div><div class="n">38%</div></div><div class="card kpi"><div class="xs faint">Avg. response</div><div class="n">6m</div></div></div>
+        <div class="card"><div class="row between"><b>Queue</b><span class="pill">3</span></div><div class="list mt-8">
+          ${[["FAB → GVA", "Fri 30 Oct · 2 pax", "42:10"], ["BQH → LBG", "Sat 31 Oct · 6 pax", "1:12:44"], ["LCY → PMI", "Mon 2 Nov · 3 pax", "2:05:00"]].map((q) => `<button class="row between" style="width:100%;text-align:left" data-toast="Opening ${q[0]}" data-icon="inbox"><div><b>${q[0]}</b><div class="xs faint">${q[1]}</div></div><span class="small faint tnum">${q[2]}</span></button>`).join("")}
+        </div></div>
+      </div>
+    </div>`,
+    init(root) {
+      let left = 14 * 60 + 22;
+      J.every(1000, () => {
+        left = Math.max(0, left - 1);
+        root.querySelector("#tm").textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+      });
+      const finish = (t, d) => {
+        root.querySelector("#actions").hidden = true;
+        root.querySelector("#done").hidden = false;
+        root.querySelector("#done-t").textContent = t;
+        root.querySelector("#done-d").textContent = d;
+      };
+      root.querySelector('[data-act="accept"]').addEventListener("click", () => finish("Accepted at $12,500", "The traveler has been notified and the aircraft is held."));
+      root.querySelector("#counter").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const v = root.querySelector("#cv").value.replace(/[^\d]/g, "");
+        if (!v) return J.toast("Enter a price first", "info");
+        finish(`Counter offer sent: ${money(+v)}`, "You'll be notified when the traveler responds.");
+      });
+      root.querySelector("#decl").addEventListener("change", (e) => e.target.value && finish("Request declined", `Reason shared: ${e.target.value}.`));
+    },
+  });
+})();

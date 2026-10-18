@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User journeys · Jettigo design review</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app/app.css?v=5"><link rel="stylesheet" href="deck/deck.css?v=5">
+</head>
+<body>
+  <div id="d-top"></div>
+  <main class="d-wrap">
+    <header class="d-head">
+      <span class="eyebrow"><i></i>Phase 1 · Strategy &amp; wireframing</span>
+      <h1>User journeys</h1>
+      <p>Five journeys cover the tasks that make or break Jettigo. Each one maps the steps, the screen that supports each step, how the user feels along the way, and the design decisions that remove friction.</p>
+    </header>
+    <div class="row wrap gap-8" id="jump" style="margin-bottom:24px"></div>
+    <section id="journeys"></section>
+    <div id="pager"></div>
+  </main>
+  <div id="foot"></div>
+
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="deck/deck.js?v=5"></script>
+  <script>
+    D.top("journeys.html");
+    // mood: 1 (stressed) .. 5 (delighted)
+    const J = [
+      { id: "book", who: "James, frequent private flyer", av: "av-mark", t: "Book a private jet", goal: "Get from London to Nice on Thursday with family, without phone calls or email chains.",
+        steps: [
+          ["Discover", "Lands on Jettigo", "Sees the promise and two clear actions.", "home", 3],
+          ["Search", "Enters the trip", "Route, date, party size and bags in one form.", "route", 3],
+          ["Choose", "Browses aircraft", "Real specs, rates and estimates side by side.", "jets", 4],
+          ["Compare", "Weighs operator quotes", "Price, cabin, baggage and rating in one table.", "compare", 4],
+          ["Verify", "Adds travelers", "Passport scan fills details and runs checks.", "travelers", 2],
+          ["Personalise", "Customises the cabin", "Add-ons with a running total, no surprises.", "amenities", 4],
+          ["Pay", "Confirms and pays", "Card, wire or company credits.", "pay", 3],
+          ["Celebrate", "Gets the pass", "Boarding pass, wallet and next steps.", "confirmed", 5] ],
+        pains: ["Charter brokers quote by email over hours or days", "Prices hide positioning and fees", "Passport details are re-typed for every flight"],
+        wins: ["Live quotes from verified operators in minutes", "All-in pricing shown before payment", "Passport scan with saved traveler profiles"] },
+      { id: "day", who: "James, on the day", av: "av-mark", t: "Day of travel", goal: "Arrive relaxed, board on time and land with a car waiting.",
+        steps: [
+          ["Prepare", "Opens the trip", "Countdown, terminal and readiness status.", "trip", 4],
+          ["Travel", "Heads to the FBO", "One-tap directions to the private terminal.", "trip", 3],
+          ["Fly", "Tracks the flight", "Family follows the live position and ETA.", "tracker", 5],
+          ["Arrange", "Books ground transport", "Chooses the car, sets the destination.", "ground", 4],
+          ["Land", "Meets the chauffeur", "Live car location and direct contact.", "chauffeur", 5],
+          ["Ask", "Messages concierge", "Any request, answered in minutes.", "concierge", 5] ],
+        pains: ["Unclear which terminal or gate to go to", "No visibility for people waiting on arrival", "Ground transport booked separately"],
+        wins: ["FBO details and directions up front", "Shareable live tracking", "Car and concierge inside the trip"] },
+      { id: "corp", who: "Sarah, travel manager", av: "av-sarah", t: "Manage company travel", goal: "Book flights for the leadership team and keep spending and compliance under control.",
+        steps: [
+          ["Sign in", "Uses company SSO", "No new password to manage.", "login", 4],
+          ["Monitor", "Reviews the dashboard", "Credits, spend trend and team activity.", "corp", 4],
+          ["Enable", "Adds a traveler", "Invites a colleague with the right role.", "corp", 4],
+          ["Book", "Books for the team", "Same booking flow, paid with credits.", "route", 4],
+          ["Reconcile", "Checks invoices", "Status per invoice, custom reports.", "invoices", 3],
+          ["Comply", "Downloads documents", "VAT, manifests and permits in one place.", "documents", 4] ],
+        pains: ["Spend scattered across cards and brokers", "Chasing invoices and VAT certificates", "No control over who can book"],
+        wins: ["Prepaid credit balance and analytics", "Exportable reports by department or traveler", "Roles: traveler, booker, admin"] },
+      { id: "onboard", who: "Riviera Air, charter operator", av: "av-john", t: "Become a Jettigo partner", goal: "List aircraft on Jettigo and start receiving qualified requests quickly.",
+        steps: [
+          ["Discover", "Reads the partner pitch", "Clear value and the two partner roles.", "partner", 4],
+          ["Verify", "Submits company details", "Licence, insurance and certificates.", "verify", 2],
+          ["Configure", "Adds aircraft and rates", "Specs, hourly rate, photos, services.", "rates", 3],
+          ["Review", "Waits for approval", "48-hour review with status updates.", "op-login", 3],
+          ["Go live", "Signs in securely", "Two-factor login to the portal.", "op-login", 4] ],
+        pains: ["Long, paper-based broker onboarding", "Unclear status after applying", "Rates entered differently per broker"],
+        wins: ["Guided three-step onboarding", "Transparent 48-hour review", "One rate card reused for every quote"] },
+      { id: "quote", who: "Riviera Air ops desk", av: "av-john", t: "Respond to a quote request", goal: "Win the right trips with fast, accurate responses.",
+        steps: [
+          ["Alert", "Gets a new request", "Notification with a response timer.", "quotes", 3],
+          ["Assess", "Reviews the trip", "Route, party, baggage and aircraft fit.", "quotes", 4],
+          ["Respond", "Accepts or counters", "Standard rate, counter offer or decline.", "quotes", 4],
+          ["Manage", "Works the queue", "Next requests ranked by urgency.", "quotes", 4] ],
+        pains: ["Requests arrive by phone and email", "Slow responses lose trips", "No feedback on declined quotes"],
+        wins: ["One queue with countdowns", "Accept in one tap at the standard rate", "Win-rate and response-time stats"] },
+    ];
+    const curve = (moods) => {
+      const w = moods.length * 182, h = 90, x = (i) => 15 + i * 182, y = (m) => 80 - (m - 1) * 17;
+      const d = moods.map((m, i) => (i ? "L" : "M") + x(i) + " " + y(m)).join(" ");
+      const face = (m) => (m >= 4 ? "#2f7d57" : m <= 2 ? "#b42318" : "#a86b12");
+      return `<svg width="${w}" viewBox="0 0 ${w} ${h}" aria-label="Emotion curve"><text x="0" y="10" font-size="10" fill="#94a3b8">Delighted</text><text x="0" y="88" font-size="10" fill="#94a3b8">Frustrated</text>
+        <path d="${d}" fill="none" stroke="#b89e67" stroke-width="2" stroke-dasharray="4 4"/>${moods.map((m, i) => `<circle cx="${x(i)}" cy="${y(m)}" r="6" fill="#fff" stroke="${face(m)}" stroke-width="2.5"/>`).join("")}</svg>`;
+    };
+    document.getElementById("jump").innerHTML = J.map((j, i) => `<a class="chip" href="#${j.id}">${i + 1}. ${j.t}</a>`).join("");
+    document.getElementById("journeys").innerHTML = J.map((j, ji) => `<article class="d-journey" id="${j.id}">
+      <div class="d-journey-h"><div class="d-persona"><span class="avatar">${`<span class="ph"><img src="assets/img/${j.av}.jpg" alt=""></span>`}</span><div><span class="label">Journey ${ji + 1} · ${j.who}</span><h3>${j.t}</h3></div></div>
+        <a class="btn sm round" href="prototype.html#${j.steps[0][3]}"><i data-lucide="play"></i> Walk through it</a></div>
+      <p class="d-muted mt-16"><b style="color:var(--ink)">Goal:</b> ${j.goal}</p>
+      <div class="d-steps">${j.steps.map((s, i) => `<div class="d-step"><div class="dot"><b>${i + 1}</b></div><span class="stage">${s[0]}</span><h4>${s[1]}</h4><p>${s[2]}</p><a class="scr-link" href="prototype.html#${s[3]}"><i data-lucide="smartphone"></i>${D.byId[s[3]].t}</a></div>`).join("")}</div>
+      <div class="d-curve">${curve(j.steps.map((s) => s[4]))}</div>
+      <div class="d-insights"><div><b><i data-lucide="circle-alert" style="color:var(--red)"></i>Pain points today</b><ul>${j.pains.map((p) => `<li>${p}</li>`).join("")}</ul></div>
+        <div><b><i data-lucide="sparkles" style="color:var(--gold-600)"></i>How Jettigo solves them</b><ul>${j.wins.map((p) => `<li>${p}</li>`).join("")}</ul></div></div>
+    </article>`).join("");
+    document.getElementById("pager").outerHTML = D.pager("journeys.html");
+    document.getElementById("foot").outerHTML = D.foot();
+    D.icons();
+  </script>
+</body>
+</html>

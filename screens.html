@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UI screens · Jettigo design review</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app/app.css?v=5"><link rel="stylesheet" href="deck/deck.css?v=5">
+</head>
+<body>
+  <div id="d-top"></div>
+  <main class="d-wrap">
+    <header class="d-head">
+      <span class="eyebrow"><i></i>Phase 2 · UI design &amp; prototyping</span>
+      <h1>High-fidelity UI screens</h1>
+      <p>All 26 screens in final visual design. Each one is built responsive, so the same screen adapts to mobile, tablet and desktop. Pick a screen, then switch devices to see it reflow.</p>
+    </header>
+
+    <section class="d-viewer">
+      <aside class="d-side" id="side"></aside>
+      <div class="d-stage">
+        <div class="d-stage-bar">
+          <div class="d-now" id="now"></div>
+          <div class="row gap-8"><div class="seg" id="dev"><button class="on" data-v="phone">Mobile</button><button data-v="tablet">Tablet</button><button data-v="desktop">Desktop</button></div><a class="btn ghost sm" id="open" target="_blank" rel="noopener">Open ↗</a></div>
+        </div>
+        <div id="stage" style="width:100%;display:flex;justify-content:center"></div>
+        <p class="d-small d-muted center" id="note" style="max-width:60ch"></p>
+      </div>
+    </section>
+
+    <section class="d-sec" style="padding-top:64px">
+      <div class="d-sec-h"><div><h2>All screens at a glance</h2><p class="mt-8">Mobile layouts. Click a screen to open it in the viewer above.</p></div></div>
+      <div id="gallery"></div>
+    </section>
+    <div id="pager"></div>
+  </main>
+  <div id="foot"></div>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="deck/deck.js?v=5"></script>
+  <script>
+    D.top("screens.html");
+    const st = { id: (location.hash.slice(1) in D.byId) ? location.hash.slice(1) : "home", dev: "phone" };
+    const side = document.getElementById("side");
+    side.innerHTML = D.groups.map((g, gi) => `<div class="g">${g}</div>` + D.screens.filter((s) => s.g === gi).map((s) => `<button data-id="${s.id}">${s.t}<small>${String(D.screens.indexOf(s) + 1).padStart(2, "0")}</small></button>`).join("")).join("");
+    const show = () => {
+      const s = D.byId[st.id];
+      side.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.id === st.id));
+      const stage = document.getElementById("stage");
+      stage.innerHTML = D.device(st.dev, st.id, { lazy: false });
+      D.fit(stage);
+      document.getElementById("now").innerHTML = `<b>${String(D.screens.indexOf(s) + 1).padStart(2, "0")} · ${s.t}</b> · ${D.groups[s.g]}`;
+      document.getElementById("note").textContent = s.n;
+      document.getElementById("open").href = `app/#/${s.id}`;
+      history.replaceState(null, "", "#" + st.id);
+    };
+    side.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; st.id = b.dataset.id; show(); if (innerWidth < 1000) document.getElementById("stage").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    document.getElementById("dev").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; document.querySelectorAll("#dev button").forEach((x) => x.classList.toggle("on", x === b)); st.dev = b.dataset.v; show(); });
+    show();
+    D.gallery(document.getElementById("gallery"), { type: "phone" });
+    document.getElementById("gallery").addEventListener("click", (e) => {
+      const a = e.target.closest('a[href^="screens.html#"]'); if (!a) return;
+      e.preventDefault(); st.id = a.getAttribute("href").split("#")[1]; show(); window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    document.getElementById("pager").outerHTML = D.pager("screens.html");
+    document.getElementById("foot").outerHTML = D.foot();
+  </script>
+</body>
+</html>

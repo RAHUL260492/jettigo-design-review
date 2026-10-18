@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wireframes · Jettigo design review</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app/app.css?v=5"><link rel="stylesheet" href="deck/deck.css?v=5">
+</head>
+<body>
+  <div id="d-top"></div>
+  <main class="d-wrap">
+    <header class="d-head">
+      <span class="eyebrow"><i></i>Phase 1 · Strategy &amp; wireframing</span>
+      <h1>Low-fidelity wireframes</h1>
+      <p>Skeletal layouts that fix content, hierarchy and placement before any visual styling. Images are shown as crossed boxes and color is removed, so the review stays on structure. Each wireframe is numbered and annotated.</p>
+    </header>
+    <div class="d-toolbar">
+      <div class="d-filter" id="filter"></div>
+      <div class="seg" id="type"><button class="on" data-v="phone">Mobile</button><button data-v="desktop">Desktop</button></div>
+    </div>
+    <div id="gallery"></div>
+    <div style="height:48px"></div>
+    <div id="pager"></div>
+  </main>
+  <div id="foot"></div>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="deck/deck.js?v=5"></script>
+  <script>
+    D.top("wireframes.html");
+    const st = { type: "phone", filter: "all" };
+    const draw = () => D.gallery(document.getElementById("gallery"), { wire: true, type: st.type, filter: st.filter });
+    const f = document.getElementById("filter");
+    f.innerHTML = `<button class="on" data-f="all">All screens</button>` + D.groups.map((g, i) => `<button data-f="${i}">${g}</button>`).join("");
+    f.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; f.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); st.filter = b.dataset.f; draw(); });
+    document.getElementById("type").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; document.querySelectorAll("#type button").forEach((x) => x.classList.toggle("on", x === b)); st.type = b.dataset.v; draw(); });
+    draw();
+    document.getElementById("pager").outerHTML = D.pager("wireframes.html");
+    document.getElementById("foot").outerHTML = D.foot();
+  </script>
+</body>
+</html>

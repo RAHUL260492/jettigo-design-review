@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sitemap & architecture · Jettigo design review</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app/app.css?v=5"><link rel="stylesheet" href="deck/deck.css?v=5">
+</head>
+<body>
+  <div id="d-top"></div>
+  <main class="d-wrap">
+    <header class="d-head">
+      <span class="eyebrow"><i></i>Phase 1 · Strategy &amp; wireframing</span>
+      <h1>Project sitemap &amp; architecture</h1>
+      <p>One platform, four products. Jettigo serves travelers, the companies that fly them and the operators who supply aircraft. Each product has its own entry point and navigation, while sharing one account system, booking engine and design language.</p>
+    </header>
+
+    <section class="d-sec" style="padding-top:0">
+      <div class="d-sec-h"><div><h2>Information architecture</h2><p class="mt-8">Every screen in the design, grouped by product. Click any screen to open its high-fidelity design. Dashed items are planned for the build but outside the design scope.</p></div></div>
+      <div class="d-root"><div class="node"><i data-lucide="plane"></i> Jettigo platform</div></div>
+      <div class="d-trunk"></div>
+      <div class="d-map" id="map"></div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Navigation model</h2><p class="mt-8">Each product gets the navigation pattern that fits how often and where it is used.</p></div></div>
+      <div class="d-grid c4">
+        <div class="d-card stack gap-8"><span class="label">Website</span><b>Marketing header</b><p class="d-muted d-small">Top bar on desktop, slide-in menu on mobile. Every page ends in "Book a jet".</p></div>
+        <div class="d-card stack gap-8"><span class="label">Passenger app</span><b>5-tab bar → top nav</b><p class="d-muted d-small">Explore · Book · Trips · Concierge · Account. Bottom tabs on phone and tablet, a top bar on desktop.</p></div>
+        <div class="d-card stack gap-8"><span class="label">Corporate console</span><b>Dashboard-first</b><p class="d-muted d-small">Overview · Invoices · Documents · Book for team · Concierge. Data-dense desktop layouts that stay readable on mobile.</p></div>
+        <div class="d-card stack gap-8"><span class="label">Partner portal</span><b>Task-first</b><p class="d-muted d-small">Quotes · Fleet · Verification. Built around time-boxed quote responses.</p></div>
+      </div>
+    </section>
+
+    <section class="d-sec">
+      <div class="d-sec-h"><div><h2>Platform architecture</h2><p class="mt-8">The proposed system structure behind the screens, so design, engineering and the business share one picture. Vendors are examples to confirm during Phase 3.</p></div></div>
+      <div class="d-arch">
+        <div class="d-layer"><div class="lbl"><b>Experiences</b><span>What users touch</span></div><div class="items">
+          <div class="it"><b>Website</b><span>Responsive web, SEO landing pages</span></div>
+          <div class="it"><b>Passenger app</b><span>iOS, Android and web</span></div>
+          <div class="it"><b>Corporate console</b><span>Web-first, mobile-ready</span></div>
+          <div class="it"><b>Partner portal</b><span>Web and mobile for operators</span></div>
+          <div class="it"><b>Concierge desk</b><span>Internal tool for the 24/7 team</span></div>
+        </div></div>
+        <div class="d-arrow">▼ secure API ▼</div>
+        <div class="d-layer"><div class="lbl"><b>Core services</b><span>Business logic</span></div><div class="items">
+          <div class="it"><b>Identity &amp; access</b><span>OTP, SSO, 2FA, roles</span></div>
+          <div class="it"><b>Search &amp; quoting</b><span>Availability, pricing, quote requests</span></div>
+          <div class="it"><b>Booking</b><span>Itinerary, manifest, amenities</span></div>
+          <div class="it"><b>Payments &amp; credits</b><span>Cards, wire, corporate credits, invoices</span></div>
+          <div class="it"><b>Fleet &amp; partners</b><span>Aircraft, rates, verification</span></div>
+          <div class="it"><b>Trip operations</b><span>Status, tracking, ground transport</span></div>
+          <div class="it"><b>Messaging</b><span>Concierge chat, notifications</span></div>
+          <div class="it"><b>Documents</b><span>Manifests, VAT, permits</span></div>
+        </div></div>
+        <div class="d-arrow">▼ integrations ▼</div>
+        <div class="d-layer ext"><div class="lbl"><b>Third parties</b><span>Examples</span></div><div class="items">
+          <div class="it"><b>Payments</b><span>Stripe / Razorpay</span></div>
+          <div class="it"><b>Identity checks</b><span>Passport OCR and KYC provider</span></div>
+          <div class="it"><b>Flight data</b><span>ADS-B / FlightAware feed</span></div>
+          <div class="it"><b>Maps</b><span>Google Maps / Mapbox</span></div>
+          <div class="it"><b>Messaging</b><span>Push, SMS, email</span></div>
+          <div class="it"><b>Wallet</b><span>Apple Wallet / Google Wallet passes</span></div>
+        </div></div>
+      </div>
+    </section>
+
+    <div id="pager"></div>
+  </main>
+  <div id="foot"></div>
+
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="deck/deck.js?v=5"></script>
+  <script>
+    D.top("sitemap.html");
+    const link = (id) => { const s = D.byId[id]; const n = String(D.screens.indexOf(s) + 1).padStart(2, "0"); return `<a href="screens.html#${id}"><span class="id">${n}</span>${s.t}</a>`; };
+    const planned = (t) => `<span class="planned">${t}</span>`;
+    const branches = [
+      { icon: "globe", t: "Website", d: "Public marketing site. Discovery, trust and sign-up.", tree: [
+        ["Home", ["home"]], ["Explore", ["fleet", "cabin"]], ["Membership", ["membership"]], ["Access", ["login"]], ["Company", [planned("About"), planned("Safety & standards"), planned("Help centre")]] ] },
+      { icon: "smartphone", t: "Passenger app", d: "Booking and everything on the day of travel.", tree: [
+        ["Book", ["route", "jets", "compare", "travelers", "amenities", "pay", "confirmed"]], ["Trips", ["trip", "tracker", "ground", "chauffeur"]], ["Concierge", ["concierge"]], ["Account", ["membership", "referral", planned("Profile & passports"), planned("Payment methods")]] ] },
+      { icon: "building-2", t: "Corporate console", d: "Travel managers controlling spend, people and paperwork.", tree: [
+        ["Overview", ["corp"]], ["Finance", ["invoices"]], ["Compliance", ["documents"]], ["Team", [planned("Travel policy"), planned("Approvals")]] ] },
+      { icon: "handshake", t: "Partner portal", d: "Operators and service providers supplying the network.", tree: [
+        ["Onboarding", ["partner", "verify", "rates"]], ["Access", ["op-login"]], ["Operations", ["quotes", planned("Fleet calendar"), planned("Payouts")]] ] },
+    ];
+    document.getElementById("map").innerHTML = branches.map((b) => `<div class="d-branch"><h3><span class="ico"><i data-lucide="${b.icon}"></i></span>${b.t}</h3><p>${b.d}</p>
+      <ul class="d-tree">${b.tree.map(([g, items]) => `<li><span class="grp">${g}</span>${items.map((x) => (x.startsWith("<") ? x : link(x))).join("<br>")}</li>`).join("")}</ul></div>`).join("");
+    document.getElementById("pager").outerHTML = D.pager("sitemap.html");
+    document.getElementById("foot").outerHTML = D.foot();
+    D.icons();
+  </script>
+</body>
+</html>
