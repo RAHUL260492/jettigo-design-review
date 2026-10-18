@@ -137,7 +137,7 @@ body { background: var(--ivory); color: var(--ink); }
 .d-persona { display: flex; gap: 14px; align-items: center; }
 .d-persona .avatar { width: 52px; height: 52px; }
 .d-persona h3 { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; }
-.d-steps { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); gap: 0; overflow-x: auto; margin: 20px -22px 0; padding: 0 22px 6px; scrollbar-width: thin; }
+.d-steps { display: grid; grid-auto-flow: column; grid-auto-columns: 182px; gap: 0; overflow-x: auto; margin: 20px -22px 0; padding: 0 22px 6px; scrollbar-width: thin; }
 .d-step { position: relative; padding: 0 12px 0 0; }
 .d-step .dot { position: relative; display: flex; align-items: center; margin-bottom: 12px; }
 .d-step .dot b { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--navy-900); color: #fff; font-size: 13px; z-index: 1; flex: none; }

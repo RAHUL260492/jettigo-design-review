@@ -26,7 +26,7 @@
         <div class="row gap-8">
           <a class="btn ghost sm round desk-only" href="#/login">Sign in</a>
           <a class="btn sm round desk-only" href="#/route">Book a jet</a>
-          <button class="iconbtn mob-only" data-act="drawer" aria-label="Open menu">${ic("menu")}</button>
+          <button class="iconbtn mob-only" data-act="drawer" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">${ic("menu")}</button>
         </div>
       </div></header>
 
@@ -108,6 +108,7 @@
       const set = (open) => {
         dr.classList.toggle("open", open);
         dr.inert = !open;
+        opener.setAttribute("aria-expanded", String(open));
         if (open) dr.querySelector("a.item").focus();
         else if (opener) opener.focus();
       };
@@ -115,7 +116,16 @@
       root.addEventListener("click", (e) => {
         if (e.target.closest('[data-act="drawer"]') || e.target === dr) set(!dr.classList.contains("open"));
       });
-      root.addEventListener("keydown", (e) => { if (e.key === "Escape" && dr.classList.contains("open")) set(false); });
+      root.addEventListener("keydown", (e) => {
+        if (!dr.classList.contains("open")) return;
+        if (e.key === "Escape") { e.preventDefault(); set(false); }
+        if (e.key === "Tab") {
+          const items = [...dr.querySelectorAll("a[href], button")];
+          const first = items[0], last = items[items.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      });
     },
   });
 
@@ -189,7 +199,7 @@
       <div class="row between" style="padding:4px 4px 10px"><button class="iconbtn" aria-label="Previous month" data-toast="Earlier dates are unavailable" data-icon="info">${ic("chevron-left")}</button><b>October 2026</b><button class="iconbtn" aria-label="Next month" data-toast="November opens in the full build" data-icon="info">${ic("chevron-right")}</button></div>
       <div class="cal-grid" id="cal">${cells}</div>
       <div class="divider"></div>
-      <div class="row" style="padding:2px 6px">${ic("clock-3")}<select class="grow" id="time" style="border:0;background:none;font-weight:600;outline:0">${["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "16:00"].map((t) => `<option ${t === S.time ? "selected" : ""}>${t}</option>`).join("")}</select><span class="pill">Local time</span></div>
+      <div class="row" style="padding:2px 6px">${ic("clock-3")}<select class="grow" id="time" aria-label="Departure time" style="border:0;background:none;font-weight:600">${["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "16:00"].map((t) => `<option ${t === S.time ? "selected" : ""}>${t}</option>`).join("")}</select><span class="pill">Local time</span></div>
     </div>`;
   }
   const summary = (withBtn) => `<div class="card pad-lg stack gap-12 sticky">
@@ -847,7 +857,7 @@
       }).join("")}</div>
       <div class="split mt-16">
         <div class="stack gap-12"><div class="row between"><h2 class="h2">360° interior tour</h2><span class="pill gold">${ic("rotate-3d")} Interactive</span></div>
-          <a href="#/cabin" class="banner-img" style="display:block;border-radius:16px;margin:0">${ph("cabin-wide", "Cabin interior", "", "aspect-ratio:16/10")}<span style="position:absolute;inset:0;display:grid;place-items:center"><span style="width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.5);font-size:13px;font-weight:600;text-align:center">${ic("rotate-3d")}<br>Rotate</span></span></a>
+          <a href="#/cabin" class="banner-img fleet-preview" style="display:block;border-radius:16px;margin:0">${ph("cabin-tall", "Cabin interior", "", "aspect-ratio:16/10")}<span style="position:absolute;inset:0;display:grid;place-items:center"><span style="width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.5);font-size:13px;font-weight:600;text-align:center">${ic("rotate-3d")}<br>Rotate</span></span></a>
         </div>
         <div class="stack gap-16">
           <div class="card stack gap-16"><div><h3 class="h2" id="fname">${J.jets[fj()].name}</h3><p class="small muted" id="fcls">${J.jets[fj()].cls}</p></div>
@@ -863,6 +873,8 @@
         </div>
       </div>`,
     init(root) {
+      const selected = root.querySelector("#fc .sel");
+      if (selected) root.querySelector("#fc").scrollLeft = selected.offsetLeft - root.querySelector("#fc").offsetLeft;
       root.querySelectorAll("[data-k]").forEach((b) =>
         b.addEventListener("click", () => {
           const j = J.jets[b.dataset.k];
@@ -893,6 +905,8 @@
     nav: "fleet",
     dark: true,
     back: "fleet",
+    ctaMobOnly: true,
+    cta: () => `<a class="btn block lg" href="#/route">${ic("plane-takeoff")} Book this jet</a>`,
     body: () => `<div class="split">
       <div class="tour"><div class="stage" id="stage">
         ${ph("cabin-tall", "Lounge", "scene on")}${ph("cabin-hero", "Forward cabin", "scene", "opacity:0")}${ph("cabin-amen", "Aft suite", "scene", "opacity:0")}
@@ -903,7 +917,7 @@
       <div class="stack gap-16">
         <div class="glass-card stack gap-12" style="padding:18px"><span class="label">${J.jets[S.jet].name}</span><h2 class="h1">A cabin built for living</h2><p class="muted">Tap the hotspots to explore cabin features. Switch scenes to walk through the aircraft.</p>
           <div class="list">${HOTS.map((h) => `<div class="row top gap-12">${ic("sparkles", "gold")}<div><b>${h.t}</b><p class="small muted">${h.d}</p></div></div>`).join("")}</div></div>
-        <a class="btn block lg" href="#/route">${ic("plane-takeoff")} Book this jet</a>
+        <a class="btn block lg desk-only" href="#/route">${ic("plane-takeoff")} Book this jet</a>
       </div>
     </div>`,
     init(root) {
@@ -943,7 +957,7 @@
     shell: "passenger",
     nav: "membership",
     back: "home",
-    cta: () => `<button class="btn lg block" data-act="upgrade" style="background:var(--navy-950);box-shadow:inset 0 0 0 1.5px var(--gold)">Upgrade to <span id="tier-n">Gold</span> ${ic("arrow-up-right", "gold")}</button>`,
+    cta: () => `<button class="btn lg block" data-act="upgrade" style="background:var(--navy-950);box-shadow:inset 0 0 0 1.5px var(--gold)">Upgrade to <span id="tier-n">${TIERS.find((t) => t.k === S.tier).name}</span> ${ic("arrow-up-right", "gold")}</button>`,
     body: () => `<div class="carousel" style="padding-top:18px">${TIERS.map((t) => `<button class="card pad-lg tier ${S.tier === t.k ? "sel" : ""}" data-tier="${t.k}" style="text-align:left">
         ${t.k === "gold" ? `<span class="pill navy flag">Most popular</span>` : ""}
         <div class="row between"><b style="font-size:20px">${t.name}</b>${ic("plane", t.k === "gold" ? "gold" : "faint")}</div>
@@ -958,6 +972,8 @@
       </div>
       <a class="card row between hover section" href="#/referral"><div class="row gap-12"><span class="folder" style="background:var(--gold)">${ic("gift")}</span><div><b>Refer a friend, earn $1,000</b><div class="small muted">Credits for you and them on their first flight</div></div></div>${ic("chevron-right")}</a>`,
     init(root) {
+      const carousel = root.querySelector(".carousel");
+      carousel.scrollLeft = carousel.querySelector(".sel").offsetLeft - carousel.offsetLeft;
       root.querySelectorAll("[data-tier]").forEach((b) =>
         b.addEventListener("click", () => {
           S.tier = b.dataset.tier;
@@ -982,11 +998,11 @@
     nav: "membership",
     back: "membership",
     body: () => `<div class="split even">
-      <div class="banner-img">${ph("referral", "Friends toasting on a private jet", "", "aspect-ratio:4/3")}</div>
+      <div class="banner-img referral-banner">${ph("referral", "Friends toasting on a private jet", "", "aspect-ratio:4/3")}</div>
       <div class="stack gap-16">
         <h1 class="display" style="font-size:clamp(34px,5vw,52px)">Share the sky</h1>
         <p class="body-lg muted">Refer a friend and you both receive $1,000 in flight credit on their first booking.</p>
-        <div class="card row between" style="background:var(--surface-2);padding:14px 14px 14px 20px"><b class="mono" style="font-size:20px;letter-spacing:.04em">JETTIGO-1000-VIP</b><button class="btn" data-act="copy">${ic("copy")} Copy</button></div>
+        <div class="card row between referral-code" style="background:var(--surface-2);padding:14px"><b class="mono">JETTIGO-1000-VIP</b><button class="btn" data-act="copy">${ic("copy")} Copy</button></div>
         <button class="btn block lg" data-act="share">${ic("share")} Share via…</button>
         <div class="section"><h2 class="h2">How it works</h2>
           <div class="g3 gap-12" style="grid-template-columns:repeat(3,1fr);text-align:center">

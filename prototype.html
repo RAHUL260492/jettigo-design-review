@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=8"><link rel="stylesheet" href="deck/deck.css?v=8">
+  <link rel="stylesheet" href="app/app.css?v=9"><link rel="stylesheet" href="deck/deck.css?v=9">
   <style>
     .d-side .flow { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px; border-radius: 12px; text-align: left; width: 100%; }
     .d-side .flow:hover { background: var(--slate-100); }
@@ -30,7 +30,7 @@
         <div class="d-stage-bar">
           <div class="d-now">Now viewing <b id="now">Landing page</b></div>
           <div class="row gap-8"><div class="seg" id="dev"><button class="on" data-v="phone">Mobile</button><button data-v="tablet">Tablet</button><button data-v="desktop">Desktop</button></div>
-            <button class="btn ghost sm" id="restart"><i data-lucide="rotate-ccw"></i> Restart</button><a class="btn sm" href="app/?hints=1" target="_blank" rel="noopener">Full screen ↗</a></div>
+            <button class="btn ghost sm" id="restart"><i data-lucide="rotate-ccw"></i> Restart</button><a class="btn sm" id="fullscreen" href="app/?hints=1" target="_blank" rel="noopener">Full screen ↗</a></div>
         </div>
         <div id="stage" style="width:100%;display:flex;justify-content:center"></div>
         <p class="d-small d-muted center">Tip: on a phone, open <b>Full screen</b> for the native feel.</p>
@@ -41,7 +41,7 @@
   </main>
   <div id="foot"></div>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=8"></script>
+  <script src="deck/deck.js?v=9"></script>
   <script>
     D.top("prototype.html");
     const FLOWS = [
@@ -54,7 +54,7 @@
       { id: "partner", t: "Become a partner", d: "Role → verification → fleet setup" },
       { id: "op-login", t: "Operator quoting", d: "Secure login with 2FA → respond to a quote" },
     ];
-    const start = location.hash.slice(1) in D.byId ? location.hash.slice(1) : "home";
+    const start = Object.prototype.hasOwnProperty.call(D.byId, location.hash.slice(1)) ? location.hash.slice(1) : "home";
     const st = { dev: "phone", route: start, flow: start };
     const flows = document.getElementById("flows");
     flows.innerHTML = `<div class="g">Start a flow</div>` + FLOWS.map((f) => `<button class="flow" data-id="${f.id}"><b>${f.t}</b><span>${f.d}</span></button>`).join("");
@@ -74,6 +74,7 @@
         const s = D.byId[e.data.id];
         document.getElementById("now").textContent = s ? `${String(D.screens.indexOf(s) + 1).padStart(2, "0")} · ${s.t}` : e.data.title;
         st.route = e.data.id;
+        document.getElementById("fullscreen").href = `app/?hints=1#/${st.route}`;
       }
     });
     mount();

@@ -72,6 +72,8 @@
     ["15 Oct 2026", "INV-8825", 18750, "Pending", "amber", "clock-3"],
     ["10 Oct 2026", "INV-8821", 31200, "Processing", "blue", "refresh-cw"],
   ];
+  const SPEND = [18400, 24750, 31300];
+  const spendTotal = SPEND.reduce((sum, value) => sum + value, 0);
   J.screen("invoices", {
     title: "Financial overview",
     doc: "Corporate invoicing & reports",
@@ -83,7 +85,7 @@
       <div class="split mt-24">
         <div class="stack gap-12" id="p-inv">
           ${INV.map((r) => `<div class="card row between"><div class="stack gap-8"><div class="xs faint">${r[0]} · ${r[1]}</div><div class="row gap-12"><b style="font-size:22px" class="tnum">${money(r[2])}.00</b><span class="pill ${r[4]}">${ic(r[5])} ${r[3]}</span></div></div><button class="sq-btn ghost" aria-label="Download ${r[1]}" data-toast="${r[1]}.pdf downloaded" data-icon="download">${ic("file-down")}</button></div>`).join("")}
-          <div class="card pad-lg"><h2 class="h2">Quarterly spending</h2><div class="mt-16">${J.chart([18.4, 24.75, 31.3], ["Aug", "Sep", "Oct"], { prefix: "" })}</div><div class="row between small mt-8"><span class="muted">Total <b style="color:var(--text)">$74,450.00</b></span><span class="muted">Avg. monthly <b style="color:var(--text)">$24,816.67</b></span></div></div>
+          <div class="card pad-lg"><h2 class="h2">Quarterly spending</h2><div class="mt-16">${J.chart(SPEND.map((value) => value / 1000), ["Aug", "Sep", "Oct"], { prefix: "" })}</div><div class="row between small mt-8"><span class="muted">Total <b style="color:var(--text)">${money(spendTotal)}.00</b></span><span class="muted">Avg. monthly <b style="color:var(--text)">${(spendTotal / SPEND.length).toLocaleString("en-US", { style: "currency", currency: "USD" })}</b></span></div></div>
         </div>
         <div class="stack gap-12" id="p-rep" hidden>
           ${[["Q3 2026 travel summary", "Trips, spend and CO₂ by department"], ["Traveler activity", "Per-person flights and policy exceptions"], ["VAT reclaim pack", "Invoices grouped by jurisdiction"]].map((r) => `<div class="card row between"><div class="row gap-12"><span class="folder">${ic("file-bar-chart")}</span><div><b>${r[0]}</b><div class="small muted">${r[1]}</div></div></div><button class="sq-btn ghost" aria-label="Download" data-toast="Report exported" data-icon="download">${ic("download")}</button></div>`).join("")}
@@ -229,7 +231,7 @@
     cta: () => `<button class="btn block lg" data-act="submit">Submit for review</button>`,
     body: () => `${vprog(2)}
       <div class="split mt-24">
-        <div class="stack gap-12"><div class="row between"><h2 class="h2">For aircraft operators</h2><div class="seg sm" id="kind"><button class="on">Aircraft</button><button>Helicopter</button></div></div>
+        <div class="stack gap-12"><div class="row between"><h2 class="h2">For aircraft operators</h2><div class="seg sm" id="kind"><button class="on" data-v="aircraft">Aircraft</button><button data-v="helicopter">Helicopter</button></div></div>
           <div class="card pad-lg stack gap-16" id="aircraft">
             <b style="font-size:18px">Add your first aircraft</b>
             <label class="field"><span>Model name</span><input class="input" placeholder="e.g. Gulfstream G650"></label>
@@ -239,7 +241,7 @@
             <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Baggage capacity</span><input class="input" placeholder="Standard bags"></label><div class="field"><span>Max total weight</span><div class="row gap-8"><input class="input" placeholder="0"><div class="seg sm dark-on"><button class="on">KG</button><button>LBS</button></div></div></div></div>
             <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">${drop("ext", "Exterior photo", "image-up")}${drop("int", "Interior photo", "image-up")}</div>
           </div>
-          <button class="btn ghost block" data-toast="Second aircraft form added" data-icon="plus">${ic("plus")} Add another aircraft</button>
+          <button class="btn ghost block" data-act="add-aircraft">${ic("plus")} Add another aircraft</button>
         </div>
         <div class="stack gap-12"><h2 class="h2">For service providers</h2>
           <div class="card list" style="padding:0 16px">
@@ -249,13 +251,28 @@
         </div>
       </div>`,
     init(root) {
-      root.querySelectorAll("[data-drop]").forEach((d) =>
-        d.addEventListener("click", () => {
-          d.classList.add("done");
-          d.innerHTML = `${ic("circle-check")}<b>${d.dataset.drop === "ext" ? "exterior.jpg" : "cabin.jpg"}</b><span>Uploaded</span>`;
-          J.icons(d);
-        })
-      );
+      root.querySelector("#kind").addEventListener("seg", (e) => {
+        const helicopter = e.detail === "helicopter";
+        root.querySelector("#aircraft > b").textContent = helicopter ? "Add your first helicopter" : "Add your first aircraft";
+        root.querySelector("#aircraft input").placeholder = helicopter ? "e.g. Airbus H160" : "e.g. Gulfstream G650";
+      });
+      const template = root.querySelector("#aircraft").cloneNode(true);
+      let count = 1;
+      root.querySelector('[data-act="add-aircraft"]').addEventListener("click", (e) => {
+        const card = template.cloneNode(true);
+        card.removeAttribute("id");
+        card.querySelector("b").textContent = `Aircraft ${++count}`;
+        e.currentTarget.before(card);
+        card.querySelector("input").focus();
+        J.icons(card);
+      });
+      root.addEventListener("click", (e) => {
+        const d = e.target.closest("[data-drop]");
+        if (!d) return;
+        d.classList.add("done");
+        d.innerHTML = `${ic("circle-check")}<b>${d.dataset.drop === "ext" ? "exterior.jpg" : "cabin.jpg"}</b><span>Uploaded</span>`;
+        J.icons(d);
+      });
       root.querySelector('[data-act="submit"]').addEventListener("click", (e) => {
         e.currentTarget.classList.add("is-loading");
         J.later(900, () => {

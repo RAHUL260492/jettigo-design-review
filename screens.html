@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=8"><link rel="stylesheet" href="deck/deck.css?v=8">
+  <link rel="stylesheet" href="app/app.css?v=9"><link rel="stylesheet" href="deck/deck.css?v=9">
 </head>
 <body>
   <div id="d-top"></div>
@@ -38,10 +38,10 @@
   </main>
   <div id="foot"></div>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=8"></script>
+  <script src="deck/deck.js?v=9"></script>
   <script>
     D.top("screens.html");
-    const st = { id: (location.hash.slice(1) in D.byId) ? location.hash.slice(1) : "home", dev: "phone" };
+    const st = { id: (Object.prototype.hasOwnProperty.call(D.byId, location.hash.slice(1))) ? location.hash.slice(1) : "home", dev: "phone" };
     const side = document.getElementById("side");
     side.innerHTML = D.groups.map((g, gi) => `<div class="g">${g}</div>` + D.screens.filter((s) => s.g === gi).map((s) => `<button data-id="${s.id}">${s.t}<small>${String(D.screens.indexOf(s) + 1).padStart(2, "0")}</small></button>`).join("")).join("");
     const show = () => {

@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=8"><link rel="stylesheet" href="deck/deck.css?v=8">
+  <link rel="stylesheet" href="app/app.css?v=9"><link rel="stylesheet" href="deck/deck.css?v=9">
 </head>
 <body>
   <div id="d-top"></div>
@@ -24,7 +24,7 @@
   <div id="foot"></div>
 
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=8"></script>
+  <script src="deck/deck.js?v=9"></script>
   <script>
     D.top("journeys.html");
     // mood: 1 (stressed) .. 5 (delighted)
@@ -91,6 +91,7 @@
       <div class="d-journey-h"><div class="d-persona"><span class="avatar">${`<span class="ph"><img src="assets/img/${j.av}.jpg" alt=""></span>`}</span><div><span class="label">Journey ${ji + 1} · ${j.who}</span><h3>${j.t}</h3></div></div>
         <a class="btn sm round" href="prototype.html#${j.steps[0][3]}"><i data-lucide="play"></i> Walk through it</a></div>
       <p class="d-muted mt-16"><b style="color:var(--ink)">Goal:</b> ${j.goal}</p>
+      <p class="xs faint mt-16">Scroll horizontally to follow every step and its emotion curve.</p>
       <div class="d-steps">${j.steps.map((s, i) => `<div class="d-step"><div class="dot"><b>${i + 1}</b></div><span class="stage">${s[0]}</span><h4>${s[1]}</h4><p>${s[2]}</p><a class="scr-link" href="prototype.html#${s[3]}"><i data-lucide="smartphone"></i>${D.byId[s[3]].t}</a></div>`).join("")}</div>
       <div class="d-curve">${curve(j.steps.map((s) => s[4]))}</div>
       <div class="d-insights"><div><b><i data-lucide="circle-alert" style="color:var(--red)"></i>Pain points today</b><ul>${j.pains.map((p) => `<li>${p}</li>`).join("")}</ul></div>
@@ -98,6 +99,11 @@
     </article>`).join("");
     document.getElementById("pager").outerHTML = D.pager("journeys.html");
     document.getElementById("foot").outerHTML = D.foot();
+    document.querySelectorAll(".d-journey").forEach((journey) => {
+      const steps = journey.querySelector(".d-steps"), curve = journey.querySelector(".d-curve");
+      steps.addEventListener("scroll", () => { curve.scrollLeft = steps.scrollLeft; });
+      curve.addEventListener("scroll", () => { steps.scrollLeft = curve.scrollLeft; });
+    });
     D.icons();
   </script>
 </body>
