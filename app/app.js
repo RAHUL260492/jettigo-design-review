@@ -170,6 +170,72 @@
     toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
   };
 
+  /**
+   * Horizontal card rows: mouse drag-to-scroll everywhere, plus prev/next arrows on
+   * card carousels (hidden at each end). Touch devices keep native swiping.
+   */
+  J.scrollers = (root) => {
+    root.querySelectorAll(".carousel, .chips-scroll, .compare").forEach((el) => {
+      if (el.dataset.scroller) return;
+      el.dataset.scroller = "1";
+      let drag = null;
+      let moved = false;
+      el.addEventListener("pointerdown", (e) => {
+        if (e.pointerType !== "mouse" || e.button !== 0) return;
+        drag = { x: e.clientX, left: el.scrollLeft };
+        moved = false;
+      });
+      const move = (e) => {
+        if (!drag) return;
+        const dx = e.clientX - drag.x;
+        if (!moved && Math.abs(dx) < 6) return;
+        moved = true;
+        el.classList.add("dragging");
+        el.scrollLeft = drag.left - dx;
+      };
+      const end = () => {
+        if (!drag) return;
+        drag = null;
+        el.classList.remove("dragging");
+      };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", end);
+      J.timers.push(() => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); });
+      // A drag must not also count as a click on the card underneath.
+      el.addEventListener("click", (e) => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+      el.addEventListener("dragstart", (e) => e.preventDefault());
+
+      if (!el.classList.contains("carousel")) return;
+      const wrap = document.createElement("div");
+      wrap.className = "scroller";
+      el.before(wrap);
+      wrap.append(el);
+      const arrow = (dir) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = `scroll-btn ${dir < 0 ? "prev" : "next"}`;
+        b.setAttribute("aria-label", dir < 0 ? "Show previous" : "Show more");
+        b.innerHTML = J.ic(dir < 0 ? "chevron-left" : "chevron-right");
+        b.addEventListener("click", () => el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" }));
+        wrap.append(b);
+        return b;
+      };
+      const prev = arrow(-1);
+      const next = arrow(1);
+      J.icons(wrap);
+      const update = () => {
+        const max = el.scrollWidth - el.clientWidth;
+        prev.hidden = el.scrollLeft <= 4;
+        next.hidden = max <= 4 || el.scrollLeft >= max - 4;
+      };
+      el.addEventListener("scroll", update, { passive: true });
+      const ro = new ResizeObserver(update);
+      ro.observe(el);
+      J.timers.push(() => ro.disconnect());
+      update();
+    });
+  };
+
   J.icons = (root) => {
     if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 1.75 }, root: root || document.body });
   };
@@ -218,6 +284,7 @@
     J.icons(root);
     window.scrollTo(0, 0);
     if (s.init) s.init(root);
+    J.scrollers(root);
     if (window.parent !== window) {
       window.parent.postMessage({ type: "jettigo:route", id, title: s.doc || s.title || id }, "*");
     }

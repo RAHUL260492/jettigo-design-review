@@ -99,7 +99,7 @@
 
   // Scroll reveal with a stagger (Vengeance UI staggered grid, minus GSAP).
   D.reveal = (root = document) => {
-    const els = $$(".d-card, .d-stats > div, .d-phase, .d-branch, .d-journey, .d-layer, .d-sw, .d-surface, .d-type > div, .d-root, .d-pager, .d-cover .elite, .d-cover p, .d-cover .row, .d-cover .meta, .d-devices", root)
+    const els = $$(".d-card, .d-stats > div, .d-ledger > li, .d-ways > div, .d-phase, .d-branch, .d-journey, .d-layer, .d-sw, .d-surface, .d-type > div, .d-root, .d-pager, .d-cover .elite, .d-cover p, .d-cover .row, .d-cover .meta, .d-devices", root)
       .filter((el) => !el.classList.contains("fx-rv") && !el.parentElement.closest(".fx-rv"));
     els.forEach((el) => el.classList.add("fx-rv"));
     // Cover copy follows the headline in sequence instead of all at once.

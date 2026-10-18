@@ -68,7 +68,7 @@
       <nav class="d-foot-nav" aria-label="Footer">${D.pages.filter((p) => !p.sep).map((p) => `<a href="${p.href}">${p.label}</a>`).join("")}</nav>
       <a class="btn sm round" href="${APP}">Open the live app ↗</a>
     </div>
-    <div class="d-foot-bot"><span>Jettigo · UI/UX design · Phases 1 &amp; 2 review · October 2026</span><span>Motion adapted from <a href="https://skiper-ui.com" target="_blank" rel="noopener">Skiper UI</a> and <a href="https://www.vengenceui.com" target="_blank" rel="noopener">Vengeance UI</a></span></div>
+    <div class="d-foot-bot"><span>Jettigo UI/UX design, phases 1 and 2 review. October 2026.</span><span>Motion adapted from <a href="https://skiper-ui.com" target="_blank" rel="noopener">Skiper UI</a> and <a href="https://www.vengenceui.com" target="_blank" rel="noopener">Vengeance UI</a></span></div>
     <div class="d-foot-mark" aria-hidden="true">Jetti<span>go</span></div>
   </div></footer>`;
 

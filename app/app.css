@@ -654,6 +654,21 @@ h1, h2, h3, h4, p { margin: 0; }
 @media (min-width: 768px) { .carousel { margin: 0; padding: 4px 0 12px; } .carousel > * { flex-basis: 46%; } }
 @media (min-width: 1100px) { .carousel > * { flex-basis: calc((100% - 28px) / 3); } }
 
+/* Scrollable rows: arrows and mouse drag (see J.scrollers) */
+.scroller { position: relative; }
+.scroll-btn { position: absolute; top: 50%; z-index: 3; width: 40px; height: 40px; margin-top: -26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.95); color: var(--navy-900); border: 1px solid var(--line); box-shadow: var(--shadow-lg); transition: opacity .2s ease, transform .2s ease; }
+.scroll-btn:hover { transform: scale(1.06); }
+.scroll-btn svg { width: 20px; height: 20px; }
+.scroll-btn.prev { left: 4px; }
+.scroll-btn.next { right: 4px; }
+@media (min-width: 768px) { .scroll-btn.prev { left: -12px; } .scroll-btn.next { right: -12px; } }
+@media (hover: none) and (pointer: coarse) { .scroll-btn { display: none; } }
+@media (hover: hover) { .carousel, .chips-scroll, .compare { cursor: grab; } }
+.carousel.dragging, .chips-scroll.dragging, .compare.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+.carousel img { -webkit-user-drag: none; user-select: none; }
+.app.dark .scroll-btn { background: rgba(35,45,54,0.95); color: #fff; border-color: var(--line-2); }
+html.wire .scroll-btn { background: #fff !important; color: #333 !important; border: 1px solid #999 !important; }
+
 /* 360 viewer */
 .tour { position: relative; border-radius: var(--r-lg); overflow: hidden; background: #000; }
 .tour .stage { position: relative; aspect-ratio: 768 / 920; max-height: calc(100vh - 120px); margin: 0 auto; }
