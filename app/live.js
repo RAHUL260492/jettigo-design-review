@@ -1,9 +1,9 @@
-/* Jettigo — live mode. Active with ?live=1. Connects the prototype screens to the
-   Jettigo API: loaders fill J.state / J.data before render, and capture-phase
+/* Jettingo — live mode. Active with ?live=1. Connects the prototype screens to the
+   Jettingo API: loaders fill J.state / J.data before render, and capture-phase
    listeners take over actions (search, book, pay…) before the demo handlers run. */
 (function () {
   const params = new URLSearchParams(location.search);
-  const cfg = window.JETTIGO_CONFIG || {};
+  const cfg = window.JETTINGO_CONFIG || {};
   const L = (J.live = { on: params.get("live") === "1", base: (cfg.apiBase || "").replace(/\/$/, ""), token: null, user: null });
   if (!L.on) return;
 
@@ -42,7 +42,7 @@
         body: body ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw Object.assign(new Error("Can't reach the Jettigo server. If it was asleep it may take up to a minute to wake; please try again."), { status: 0 });
+      throw Object.assign(new Error("Can't reach the Jettingo server. If it was asleep it may take up to a minute to wake; please try again."), { status: 0 });
     }
     if (generation !== sessionGeneration) throw Object.assign(new Error("Session changed"), { staleSession: true });
     if (res.status === 401 && L.token) setSession(null, null);
@@ -503,7 +503,7 @@
           const r = await api("POST", "/v1/me/membership", { tier: S.tier });
           setSession(L.token, r.user);
           busy(el, false);
-          J.toast(`Welcome to Jettigo ${r.user.tier[0].toUpperCase()}${r.user.tier.slice(1)} (test mode, no charge)`, "crown");
+          J.toast(`Welcome to Jettingo ${r.user.tier[0].toUpperCase()}${r.user.tier.slice(1)} (test mode, no charge)`, "crown");
         } catch (err) {
           fail(err, el);
         }
@@ -603,7 +603,7 @@
         busy(el, true);
         try {
           const res = await api("GET", `/v1/company/report?from=${root.querySelector("#rfrom").value}&to=${root.querySelector("#rto").value}&format=csv`, null, { raw: true });
-          await download(res, "jettigo-report.csv");
+          await download(res, "jettingo-report.csv");
           busy(el, false);
         } catch (err) {
           fail(err, el);
@@ -742,7 +742,7 @@
       }
       op.stats = { win: `${Math.round(me.stats.winRate * 100)}%`, resp: String(me.stats.quotes30d) };
       if (me.operator.status !== "approved") {
-        op.review = me.operator.status === "pending" ? `Thanks, ${me.operator.name}. Our compliance team reviews every partner within 48 hours. You'll receive requests here once approved.` : "Your application was not approved. Contact partners@jettigo.app for details.";
+        op.review = me.operator.status === "pending" ? `Thanks, ${me.operator.name}. Our compliance team reviews every partner within 48 hours. You'll receive requests here once approved.` : "Your application was not approved. Contact partners@jettingo.com for details.";
         op.req = null;
         op.queue = [];
         return;

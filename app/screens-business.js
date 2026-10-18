@@ -1,4 +1,4 @@
-/* Jettigo — corporate console + partner / operator portal */
+/* Jettingo — corporate console + partner / operator portal */
 (function () {
   const { ic, ph, money, brand } = J;
 
@@ -54,7 +54,7 @@
 
   /* =============== Corporate dashboard =============== */
   J.screen("corp", {
-    title: "Jettigo Corporate",
+    title: "Jettingo Corporate",
     sub: () => esc(D.corp.name),
     doc: "Corporate management dashboard",
     group: "Corporate",
@@ -184,7 +184,7 @@
     full: () => `<div class="app dark no-tabs" style="background:radial-gradient(100% 60% at 50% 0%,#2a3644,transparent),var(--night)">
       <header class="mnav" style="position:static"><div class="mnav-in"><a href="#/home">${brand("light")}</a><a class="btn ghost sm round" href="#/op-login">Operator login</a></div></header>
       <main class="main" style="padding-bottom:40px"><div class="split even" style="align-items:center">
-        <div class="banner-img" style="border-radius:20px;margin:0">${ph("hangar", "Jet and crew in a hangar", "", "aspect-ratio:4/3")}<div class="cap" style="padding:24px"><h1 class="h1">Partner with Jettigo</h1><p style="opacity:.8">Join an exclusive network of global aviation partners.</p></div></div>
+        <div class="banner-img" style="border-radius:20px;margin:0">${ph("hangar", "Jet and crew in a hangar", "", "aspect-ratio:4/3")}<div class="cap" style="padding:24px"><h1 class="h1">Partner with Jettingo</h1><p style="opacity:.8">Join an exclusive network of global aviation partners.</p></div></div>
         <div class="stack gap-16">
           <span class="label">Choose your role</span>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">
@@ -232,7 +232,7 @@
         </div>
         <div class="stack gap-12"><h2 class="h2">Document upload</h2>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">${drop("aoc", "Operating certificate", "file-text")}${drop("ins", "Insurance coverage", "upload")}</div>
-          <div class="card row gap-12" style="background:var(--surface-2)">${ic("lock", "gold")}<p class="small muted">Documents are encrypted and only reviewed by the Jettigo compliance team.</p></div>
+          <div class="card row gap-12" style="background:var(--surface-2)">${ic("lock", "gold")}<p class="small muted">Documents are encrypted and only reviewed by the Jettingo compliance team.</p></div>
         </div>
       </div>`,
     init(root) {
@@ -278,7 +278,7 @@
           <div class="card list" style="padding:0 16px">
             ${[["utensils-crossed", "In-flight catering"], ["car-front", "Ground transportation"], ["concierge-bell", "Concierge services"], ["warehouse", "FBO &amp; handling"]].map((s) => `<div class="row between"><div class="row gap-12">${ic(s[0], "faint")}<span>${s[1]}</span></div><label class="switch" aria-label="${s[1]}"><input type="checkbox"><span></span></label></div>`).join("")}
           </div>
-          <p class="small faint center">Jettigo reviews every partner within 48 hours to ensure premium standards.</p>
+          <p class="small faint center">Jettingo reviews every partner within 48 hours to ensure premium standards.</p>
         </div>
       </div>`,
     init(root) {

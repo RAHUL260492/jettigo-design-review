@@ -1,4 +1,4 @@
-/* Jettigo design review — motion layer (see fx.css for credits).
+/* Jettingo design review — motion layer (see fx.css for credits).
    Runs after each page's inline script has rendered, on DOMContentLoaded. */
 (function () {
   const D = (window.D = window.D || {});

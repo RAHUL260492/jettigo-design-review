@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>User journeys · Jettigo design review</title>
+  <title>User journeys · Jettingo design review</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=17"><link rel="stylesheet" href="deck/deck.css?v=22"><link rel="stylesheet" href="deck/fx.css?v=22">
+  <link rel="stylesheet" href="app/app.css?v=17"><link rel="stylesheet" href="deck/deck.css?v=23"><link rel="stylesheet" href="deck/fx.css?v=23">
 </head>
 <body>
   <div id="d-top"></div>
@@ -15,7 +15,7 @@
     <header class="d-head">
       <span class="eyebrow"><i></i>Phase 1 · Strategy &amp; wireframing</span>
       <h1>User journeys</h1>
-      <p>Five journeys cover the tasks that make or break Jettigo. Each one maps the steps, the screen that supports each step, how the user feels along the way, and the design decisions that remove friction.</p>
+      <p>Five journeys cover the tasks that make or break Jettingo. Each one maps the steps, the screen that supports each step, how the user feels along the way, and the design decisions that remove friction.</p>
     </header>
     <div class="row wrap gap-8" id="jump" style="margin-bottom:24px"></div>
     <section id="journeys"></section>
@@ -24,15 +24,15 @@
   <div id="foot"></div>
 
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=22"></script>
-  <script src="deck/fx.js?v=22"></script>
+  <script src="deck/deck.js?v=23"></script>
+  <script src="deck/fx.js?v=23"></script>
   <script>
     D.top("journeys.html");
     // mood: 1 (stressed) .. 5 (delighted)
     const J = [
       { id: "book", who: "James, frequent private flyer", av: "rahul", t: "Book a private jet", goal: "Get from London to Nice on Thursday with family, without phone calls or email chains.",
         steps: [
-          ["Discover", "Lands on Jettigo", "Sees the promise and two clear actions.", "home", 3],
+          ["Discover", "Lands on Jettingo", "Sees the promise and two clear actions.", "home", 3],
           ["Search", "Enters the trip", "Route, date, party size and bags in one form.", "route", 3],
           ["Choose", "Browses aircraft", "Real specs, rates and estimates side by side.", "jets", 4],
           ["Compare", "Weighs operator quotes", "Price, cabin, baggage and rating in one table.", "compare", 4],
@@ -62,7 +62,7 @@
           ["Comply", "Downloads documents", "VAT, manifests and permits in one place.", "documents", 4] ],
         pains: ["Spend scattered across cards and brokers", "Chasing invoices and VAT certificates", "No control over who can book"],
         wins: ["Prepaid credit balance and analytics", "Exportable reports by department or traveler", "Roles: traveler, booker, admin"] },
-      { id: "onboard", who: "Riviera Air, charter operator", av: "rahul", t: "Become a Jettigo partner", goal: "List aircraft on Jettigo and start receiving qualified requests quickly.",
+      { id: "onboard", who: "Riviera Air, charter operator", av: "rahul", t: "Become a Jettingo partner", goal: "List aircraft on Jettingo and start receiving qualified requests quickly.",
         steps: [
           ["Discover", "Reads the partner pitch", "Clear value and the two partner roles.", "partner", 4],
           ["Verify", "Submits company details", "Licence, insurance and certificates.", "verify", 2],
@@ -96,7 +96,7 @@
       <div class="d-steps">${j.steps.map((s, i) => `<div class="d-step"><div class="dot"><b>${i + 1}</b></div><span class="stage">${s[0]}</span><h4>${s[1]}</h4><p>${s[2]}</p><a class="scr-link" href="prototype.html#${s[3]}"><i data-lucide="smartphone"></i>${D.byId[s[3]].t}</a></div>`).join("")}</div>
       <div class="d-curve">${curve(j.steps.map((s) => s[4]))}</div>
       <div class="d-insights"><div><b><i data-lucide="circle-alert" style="color:var(--red)"></i>Pain points today</b><ul>${j.pains.map((p) => `<li>${p}</li>`).join("")}</ul></div>
-        <div><b><i data-lucide="sparkles" style="color:var(--gold-600)"></i>How Jettigo solves them</b><ul>${j.wins.map((p) => `<li>${p}</li>`).join("")}</ul></div></div>
+        <div><b><i data-lucide="sparkles" style="color:var(--gold-600)"></i>How Jettingo solves them</b><ul>${j.wins.map((p) => `<li>${p}</li>`).join("")}</ul></div></div>
     </article>`).join("");
     document.getElementById("pager").outerHTML = D.pager("journeys.html");
     document.getElementById("foot").outerHTML = D.foot();

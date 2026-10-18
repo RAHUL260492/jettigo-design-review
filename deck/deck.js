@@ -1,4 +1,4 @@
-/* Jettigo design review — shared navigation, screen index and live device frames. */
+/* Jettingo design review — shared navigation, screen index and live device frames. */
 (function () {
   const D = (window.D = {});
   const APP = "app/";
@@ -70,8 +70,8 @@
       <nav class="d-foot-nav" aria-label="Footer">${D.pages.filter((p) => !p.sep).map((p) => `<a href="${p.href}">${p.label}</a>`).join("")}</nav>
       <a class="btn sm round" href="${APP}">Open the live app ↗</a>
     </div>
-    <div class="d-foot-bot"><span>Jettigo UI and UX design. Review of phases 1 and 2, October 2026.</span><span>Some animations are adapted from <a href="https://skiper-ui.com" target="_blank" rel="noopener">Skiper UI</a> and <a href="https://www.vengenceui.com" target="_blank" rel="noopener">Vengeance UI</a></span></div>
-    <div class="d-foot-mark" aria-hidden="true">Jetti<span>go</span></div>
+    <div class="d-foot-bot"><span>Jettingo UI and UX design. Review of phases 1 and 2, October 2026.</span><span>Some animations are adapted from <a href="https://skiper-ui.com" target="_blank" rel="noopener">Skiper UI</a> and <a href="https://www.vengenceui.com" target="_blank" rel="noopener">Vengeance UI</a></span></div>
+    <div class="d-foot-mark" aria-hidden="true">Jettin<span>go</span></div>
   </div></footer>`;
 
   const SIZES = { phone: [390, 844], tablet: [820, 1180], desktop: [1440, 900] };
@@ -81,7 +81,7 @@
     const q = [wire && "wire=1", hints && "hints=1"].filter(Boolean).join("&");
     const src = `${APP}${q ? "?" + q : ""}#/${route}`;
     return `<div class="d-dev ${type}${flat ? " flat" : ""}"${id ? ` id="${id}"` : ""}><div class="scr" style="aspect-ratio:${w}/${h}">
-      <iframe src="${src}" width="${w}" height="${h}" data-w="${w}" ${lazy ? 'loading="lazy"' : ""} title="Jettigo ${route} screen" ${interactive ? "" : 'tabindex="-1" style="pointer-events:none"'}></iframe></div></div>`;
+      <iframe src="${src}" width="${w}" height="${h}" data-w="${w}" ${lazy ? 'loading="lazy"' : ""} title="Jettingo ${route} screen" ${interactive ? "" : 'tabindex="-1" style="pointer-events:none"'}></iframe></div></div>`;
   };
   D.fit = (root = document) => {
     root.querySelectorAll(".d-dev .scr").forEach((scr) => {
@@ -95,7 +95,7 @@
     });
   };
 
-  const J_BRAND = `<span class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M19.5 4h6v14.6c0 5.9-4 9.4-9.6 9.4-4.6 0-8.2-2.4-9.7-6.6l5.3-2.2c.8 2.1 2.3 3.3 4.3 3.3 2.4 0 3.7-1.5 3.7-4.3V4z"/><path fill="#B89E67" d="M2.5 12.4 26 7.2l-6.2 6.4L2.5 15.3z"/></svg><span>Jetti<span class="go">go</span></span></span>`;
+  const J_BRAND = `<span class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M19.5 4h6v14.6c0 5.9-4 9.4-9.6 9.4-4.6 0-8.2-2.4-9.7-6.6l5.3-2.2c.8 2.1 2.3 3.3 4.3 3.3 2.4 0 3.7-1.5 3.7-4.3V4z"/><path fill="#B89E67" d="M2.5 12.4 26 7.2l-6.2 6.4L2.5 15.3z"/></svg><span>Jettin<span class="go">go</span></span></span>`;
   D.BRAND = J_BRAND;
 
   // Gallery of screens (used by wireframes + UI screens pages).

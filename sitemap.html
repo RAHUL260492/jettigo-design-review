@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sitemap & architecture · Jettigo design review</title>
+  <title>Sitemap & architecture · Jettingo design review</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=17"><link rel="stylesheet" href="deck/deck.css?v=22"><link rel="stylesheet" href="deck/fx.css?v=22">
+  <link rel="stylesheet" href="app/app.css?v=17"><link rel="stylesheet" href="deck/deck.css?v=23"><link rel="stylesheet" href="deck/fx.css?v=23">
 </head>
 <body>
   <div id="d-top"></div>
@@ -15,12 +15,12 @@
     <header class="d-head">
       <span class="eyebrow"><i></i>Phase 1 · Strategy &amp; wireframing</span>
       <h1>Project sitemap &amp; architecture</h1>
-      <p>One platform, four products. Jettigo serves travelers, the companies that fly them and the operators who supply aircraft. Each product has its own entry point and navigation, while sharing one account system, booking engine and design language.</p>
+      <p>One platform, four products. Jettingo serves travelers, the companies that fly them and the operators who supply aircraft. Each product has its own entry point and navigation, while sharing one account system, booking engine and design language.</p>
     </header>
 
     <section class="d-sec" style="padding-top:0">
       <div class="d-sec-h"><div><h2>Information architecture</h2><p class="mt-8">Every screen in the design, grouped by product. Click any screen to open its high-fidelity design. Dashed items are planned for the build but outside the design scope.</p></div></div>
-      <div class="d-root"><div class="node"><i data-lucide="plane"></i> Jettigo platform</div></div>
+      <div class="d-root"><div class="node"><i data-lucide="plane"></i> Jettingo platform</div></div>
       <div class="d-trunk"></div>
       <div class="d-map" id="map"></div>
     </section>
@@ -73,8 +73,8 @@
   <div id="foot"></div>
 
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=22"></script>
-  <script src="deck/fx.js?v=22"></script>
+  <script src="deck/deck.js?v=23"></script>
+  <script src="deck/fx.js?v=23"></script>
   <script>
     D.top("sitemap.html");
     const link = (id) => { const s = D.byId[id]; const n = String(D.screens.indexOf(s) + 1).padStart(2, "0"); return `<a href="screens.html#${id}"><span class="id">${n}</span>${s.t}</a>`; };

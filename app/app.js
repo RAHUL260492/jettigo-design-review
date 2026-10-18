@@ -1,4 +1,4 @@
-/* Jettigo prototype — router, shells and shared helpers.
+/* Jettingo prototype — router, shells and shared helpers.
    Screens register themselves in screens-*.js via J.screen(id, def). */
 (function () {
   const params = new URLSearchParams(location.search);
@@ -70,7 +70,7 @@
   J.esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const MARK = `<svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M19.5 4h6v14.6c0 5.9-4 9.4-9.6 9.4-4.6 0-8.2-2.4-9.7-6.6l5.3-2.2c.8 2.1 2.3 3.3 4.3 3.3 2.4 0 3.7-1.5 3.7-4.3V4z"/><path fill="#B89E67" d="M2.5 12.4 26 7.2l-6.2 6.4L2.5 15.3z"/></svg>`;
   J.brand = (cls = "", suffix = "") =>
-    `<span class="brand ${cls}">${MARK}<span>Jetti<span class="go">go</span>${suffix ? ` <span style="font-weight:500;opacity:.7">${suffix}</span>` : ""}</span></span>`;
+    `<span class="brand ${cls}">${MARK}<span>Jettin<span class="go">go</span>${suffix ? ` <span style="font-weight:500;opacity:.7">${suffix}</span>` : ""}</span></span>`;
 
   /* ---------- Navigation shells ---------- */
   const NAVS = {
@@ -280,13 +280,13 @@
     old.replaceWith(root);
     root.innerHTML = frame(s);
     root.className = "screen-enter";
-    document.title = `${s.doc || s.title || "Jettigo"} · Jettigo`;
+    document.title = `${s.doc || s.title || "Jettingo"} · Jettingo`;
     J.icons(root);
     window.scrollTo(0, 0);
     if (s.init) s.init(root);
     J.scrollers(root);
     if (window.parent !== window) {
-      window.parent.postMessage({ type: "jettigo:route", id, title: s.doc || s.title || id }, "*");
+      window.parent.postMessage({ type: "jettingo:route", id, title: s.doc || s.title || id }, "*");
     }
   }
 

@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Checklist · Jettigo design review</title>
+  <title>Checklist · Jettingo design review</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=22"><link rel="stylesheet" href="deck/deck.css?v=22"><link rel="stylesheet" href="deck/fx.css?v=22">
+  <link rel="stylesheet" href="app/app.css?v=23"><link rel="stylesheet" href="deck/deck.css?v=23"><link rel="stylesheet" href="deck/fx.css?v=23">
 </head>
 <body>
   <div id="d-top"></div>
@@ -27,8 +27,8 @@
   <div id="foot"></div>
 
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=22"></script>
-  <script src="deck/fx.js?v=22"></script>
+  <script src="deck/deck.js?v=23"></script>
+  <script src="deck/fx.js?v=23"></script>
   <script>
     D.top("checklist.html");
     // done: delivered and reviewable. review: waiting on the review itself. next: scheduled for Phase 3.
@@ -46,21 +46,21 @@
         { done: true, t: "This review site", n: "Everything above in one place, published online so it can be shared.", href: "index.html" },
       ] },
       { t: "Review of phases 1 and 2", status: "review", items: [
-        { done: false, who: "Jettigo", t: "Walk through the prototype on a phone", n: "The mobile version is the one most passengers will use, so it is the one to judge first.", href: "app/?hints=1", cta: "Open the app" },
-        { done: false, who: "Jettigo", t: "Send feedback by screen number", n: "Every screen is numbered 01 to 26 on the wireframe and UI pages. Quoting the number makes each comment easy to act on.", href: "screens.html", cta: "See the numbers" },
+        { done: false, who: "Jettingo", t: "Walk through the prototype on a phone", n: "The mobile version is the one most passengers will use, so it is the one to judge first.", href: "app/?hints=1", cta: "Open the app" },
+        { done: false, who: "Jettingo", t: "Send feedback by screen number", n: "Every screen is numbered 01 to 26 on the wireframe and UI pages. Quoting the number makes each comment easy to act on.", href: "screens.html", cta: "See the numbers" },
         { done: false, who: "Design team", t: "Revise the screens from that feedback", n: "Starts as soon as the comments are in." },
-        { done: false, who: "Jettigo", t: "Sign off phases 1 and 2", n: "Confirms the designs that Phase 3 will be built from." },
+        { done: false, who: "Jettingo", t: "Sign off phases 1 and 2", n: "Confirms the designs that Phase 3 will be built from." },
       ] },
       { t: "Phase 3 · Developer handoff", status: "next", items: [
         { done: false, who: "Design team", t: "Design system (UI kit)", n: "The master library of reusable components: buttons, type, inputs, cards, navigation and states." },
         { done: false, who: "Design team", t: "Exported asset library", n: "Every SVG, image and icon, organised in folders and named for the build." },
         { done: false, who: "Design team", t: "Developer files", n: "Annotated specs for spacing, behaviour and states on every screen, ready for coding." },
-        { done: false, who: "Jettigo + Design team", t: "Confirm the third-party vendors", n: "Payments, identity checks, flight data, maps, messaging and wallet passes are shown as examples on the architecture page. The final choices are settled together in Phase 3.", href: "sitemap.html", cta: "Architecture" },
+        { done: false, who: "Jettingo + Design team", t: "Confirm the third-party vendors", n: "Payments, identity checks, flight data, maps, messaging and wallet passes are shown as examples on the architecture page. The final choices are settled together in Phase 3.", href: "sitemap.html", cta: "Architecture" },
       ] },
     ];
 
     const STATUS = { done: ["Delivered", ""], review: ["In review", "amber"], next: ["Up next", "next"] };
-    const KEY = "jettigo-checklist";
+    const KEY = "jettingo-checklist";
     const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
     const save = (o) => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
     let ticks = load();
@@ -74,8 +74,8 @@
       const open = all.filter((i) => !isDone(i));
       document.getElementById("progress").innerHTML = `
         <div><div class="d-num">${doneN}</div><p>of ${all.length} items ticked</p></div>
-        <div><div class="d-num">${open.filter((i) => (i.who || "").startsWith("Jettigo")).length}</div><p>waiting on Jettigo</p></div>
-        <div><div class="d-num">${open.filter((i) => !(i.who || "").startsWith("Jettigo")).length}</div><p>with the design team</p></div>`;
+        <div><div class="d-num">${open.filter((i) => (i.who || "").startsWith("Jettingo")).length}</div><p>waiting on Jettingo</p></div>
+        <div><div class="d-num">${open.filter((i) => !(i.who || "").startsWith("Jettingo")).length}</div><p>with the design team</p></div>`;
     };
 
     document.getElementById("groups").innerHTML = GROUPS.map((g) => `

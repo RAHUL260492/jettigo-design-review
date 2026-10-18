@@ -1,4 +1,4 @@
-/* Jettigo — public + passenger screens */
+/* Jettingo — public + passenger screens */
 (function () {
   const { ic, ph, money, brand } = J;
   const S = J.state;
@@ -21,7 +21,7 @@
     group: "Website",
     full: () => `<div class="landing">
       <header class="mnav"><div class="mnav-in">
-        <a href="#/home" aria-label="Jettigo home">${brand()}</a>
+        <a href="#/home" aria-label="Jettingo home">${brand()}</a>
         <nav><a href="#/fleet">Fleet</a><a href="#/membership">Membership</a><a href="#/corp">For business</a><a href="#/partner">Partner with us</a></nav>
         <div class="row gap-8">
           <a class="btn ghost sm round desk-only" href="#/login">Sign in</a>
@@ -64,7 +64,7 @@
         <div class="g4 mt-32 gap-24" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
           <div class="feature"><span class="ico">${ic("route")}</span><h3 class="h3">Tell us the trip</h3><p class="muted">Route, date and party size. One way, return or multi-city.</p></div>
           <div class="feature"><span class="ico">${ic("scale")}</span><h3 class="h3">Compare live quotes</h3><p class="muted">Verified operators respond in minutes. Compare aircraft, cabin and price side by side.</p></div>
-          <div class="feature"><span class="ico">${ic("shield-check")}</span><h3 class="h3">Fly with confidence</h3><p class="muted">Every operator is licensed, insured and safety audited before joining Jettigo.</p></div>
+          <div class="feature"><span class="ico">${ic("shield-check")}</span><h3 class="h3">Fly with confidence</h3><p class="muted">Every operator is licensed, insured and safety audited before joining Jettingo.</p></div>
           <div class="feature"><span class="ico">${ic("car-front")}</span><h3 class="h3">Door to door</h3><p class="muted">Chauffeur, catering and concierge arranged around your schedule.</p></div>
         </div>
       </section>
@@ -88,7 +88,7 @@
 
       <footer class="lp-foot"><div class="lp-section">
         <div class="row between wrap gap-24">${brand("light")}<div class="row wrap gap-24 small"><a href="#/fleet">Fleet</a><a href="#/membership">Membership</a><a href="#/partner">Partner with us</a><a href="#/op-login">Operator login</a><a href="#/login">Sign in</a></div></div>
-        <p class="xs mt-32" style="opacity:.6">© 2026 Jettigo. Prototype for design review.</p>
+        <p class="xs mt-32" style="opacity:.6">© 2026 Jettingo. Prototype for design review.</p>
       </div></footer>
 
       <div class="drawer" id="drawer"><div class="drawer-in">
@@ -138,7 +138,7 @@
     full: () => `<div class="auth split-auth">
       <div class="auth-art">${ph("jet-clouds", "")}<p class="q">Every journey, impeccably arranged.</p></div>
       <div class="auth-pane"><div class="auth-card">
-        <a href="#/home" style="align-self:center" aria-label="Jettigo home">${brand("light lg")}</a>
+        <a href="#/home" style="align-self:center" aria-label="Jettingo home">${brand("light lg")}</a>
         <div class="stack gap-8 center" style="margin:8px 0 4px"><h1 class="h1">Welcome aboard</h1><p style="opacity:.7">Sign in to book, track and manage your flights.</p></div>
         <div class="seg block" id="acct"><button class="on" data-v="passenger">Passenger</button><button data-v="corporate">Corporate</button></div>
         <div id="s-id" class="stack gap-12">
@@ -155,7 +155,7 @@
         <div class="or">OR</div>
         <div class="social"><button data-act="social">${APPLE} Apple</button><button data-act="social">${GOOGLE} Google</button></div>
         <a class="btn ghost block lg" style="color:#fff;border-color:var(--gold)" href="#/route">Get a quote as guest</a>
-        <p class="center small" style="opacity:.75">New to Jettigo? <a class="link" style="color:var(--gold-200)" href="#/membership">Join Jettigo</a></p>
+        <p class="center small" style="opacity:.75">New to Jettingo? <a class="link" style="color:var(--gold-200)" href="#/membership">Join Jettingo</a></p>
       </div></div>
     </div>`,
     init(root) {
@@ -825,7 +825,7 @@
     "Add a passenger": "Happy to help. Please share the passenger's full name and I'll send a secure passport link.",
   };
   J.screen("concierge", {
-    title: "Jettigo Concierge",
+    title: "Jettingo Concierge",
     sub: "Sophia · Available 24/7",
     doc: "Concierge chat",
     group: "Day of travel",
@@ -839,7 +839,7 @@
     body: () => `<div class="split"><div class="chat" id="chat">
         <div class="center xs faint">Today</div>
         ${S.thread
-          ? (S.thread.length ? S.thread.map((m) => `<div class="msg ${m.sender === "user" ? "me" : "them"}">${J.esc(m.body)}<span class="ts">${new Date(m.createdAt).toTimeString().slice(0, 5)}</span></div>`).join("") : `<div class="msg them">Hello, I'm your Jettigo concierge. How can I help with your travel today?</div>`)
+          ? (S.thread.length ? S.thread.map((m) => `<div class="msg ${m.sender === "user" ? "me" : "them"}">${J.esc(m.body)}<span class="ts">${new Date(m.createdAt).toTimeString().slice(0, 5)}</span></div>`).join("") : `<div class="msg them">Hello, I'm your Jettingo concierge. How can I help with your travel today?</div>`)
           : `<div class="msg me">Hello Sophia, could you arrange a bottle of 1996 vintage Champagne for my flight on Thursday?<span class="ts">09:12</span></div>
         <div class="msg them">Certainly, Mr. Thompson. A bottle of the 1996 vintage has been confirmed for your journey. Anything else?<span class="ts">09:13</span></div>`}
       </div>
@@ -882,7 +882,7 @@
   const HEIGHT = { global7500: "6ft 2in", g650: "6ft 5in", longitude: "6ft 0in", falcon8x: "6ft 2in" };
   const fj = () => (FLEET.includes(S.jet) ? S.jet : "global7500");
   J.screen("fleet", {
-    title: "Jettigo fleet",
+    title: "Jettingo fleet",
     doc: "Fleet gallery",
     group: "Website",
     shell: "passenger",
@@ -1022,7 +1022,7 @@
       root.querySelector('[data-act="upgrade"]').addEventListener("click", (e) => {
         const b = e.currentTarget;
         b.classList.add("is-loading");
-        J.later(900, () => { b.classList.remove("is-loading"); J.toast(`Welcome to Jettigo ${TIERS.find((t) => t.k === S.tier).name}`, "crown"); });
+        J.later(900, () => { b.classList.remove("is-loading"); J.toast(`Welcome to Jettingo ${TIERS.find((t) => t.k === S.tier).name}`, "crown"); });
       });
     },
   });
@@ -1040,7 +1040,7 @@
       <div class="stack gap-16">
         <h1 class="display" style="font-size:clamp(34px,5vw,52px)">Share the sky</h1>
         <p class="body-lg muted">Refer a friend and you both receive $1,000 in flight credit on their first booking.</p>
-        <div class="card row between referral-code" style="background:var(--surface-2);padding:14px"><b class="mono">${J.esc((S.referral && S.referral.code) || "JETTIGO-1000-VIP")}</b><button class="btn" data-act="copy">${ic("copy")} Copy</button></div>
+        <div class="card row between referral-code" style="background:var(--surface-2);padding:14px"><b class="mono">${J.esc((S.referral && S.referral.code) || "JETTINGO-1000-VIP")}</b><button class="btn" data-act="copy">${ic("copy")} Copy</button></div>
         <button class="btn block lg" data-act="share">${ic("share")} Share via…</button>
         <div class="section"><h2 class="h2">How it works</h2>
           <div class="g3 gap-12" style="grid-template-columns:repeat(3,1fr);text-align:center">
@@ -1054,18 +1054,18 @@
     </div>`,
     init(root) {
       root.querySelector('[data-act="copy"]').addEventListener("click", () => {
-        navigator.clipboard?.writeText((S.referral && S.referral.code) || "JETTIGO-1000-VIP").catch(() => {});
+        navigator.clipboard?.writeText((S.referral && S.referral.code) || "JETTINGO-1000-VIP").catch(() => {});
         J.toast("Referral code copied", "copy");
       });
       root.querySelector('[data-act="share"]').addEventListener("click", () => {
-        const code = (S.referral && S.referral.code) || "JETTIGO-1000-VIP";
-        const text = `Use my code ${code} for $1,000 off your first private flight with Jettigo.`;
+        const code = (S.referral && S.referral.code) || "JETTINGO-1000-VIP";
+        const text = `Use my code ${code} for $1,000 off your first private flight with Jettingo.`;
         const copy = () => {
           navigator.clipboard?.writeText(text).catch(() => {});
           J.toast("Invite copied. Paste it into any message.", "copy");
         };
         // Native share sheet where available; otherwise (or if it fails) copy the invite.
-        if (navigator.share) navigator.share({ title: "Fly with Jettigo", text }).catch((err) => err && err.name !== "AbortError" && copy());
+        if (navigator.share) navigator.share({ title: "Fly with Jettingo", text }).catch((err) => err && err.name !== "AbortError" && copy());
         else copy();
       });
     },

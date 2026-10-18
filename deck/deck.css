@@ -1,4 +1,4 @@
-/* Jettigo design review — presentation layer. Loaded after app.css so it
+/* Jettingo design review — presentation layer. Loaded after app.css so it
    shares the same tokens; every class here is prefixed d- to avoid clashes. */
 
 body { background: var(--ivory); color: var(--ink); }
