@@ -276,6 +276,30 @@
     return `"${(/^[=+\-@]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
   }).join(",")).join("\n");
 
+  /** Minimal one-page PDF (Helvetica text lines) so exports are real PDF files. */
+  J.pdf = (title, lines) => {
+    const clean = (t) => String(t).replace(/→/g, "->").replace(/[·•]/g, "-").replace(/[–—]/g, "-").replace(/⇄/g, "<->").normalize("NFKD").replace(/[^\x20-\x7E]/g, "").replace(/[\\()]/g, (c) => "\\" + c);
+    const body = [`BT /F2 18 Tf 50 790 Td (${clean(title)}) Tj ET`, ...lines.slice(0, 48).map((l, i) => `BT /F1 11 Tf 50 ${756 - i * 15} Td (${clean(l)}) Tj ET`)].join("\n");
+    const objs = [
+      "<< /Type /Catalog /Pages 2 0 R >>",
+      "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+      "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
+      `<< /Length ${body.length} >>\nstream\n${body}\nendstream`,
+    ];
+    let out = "%PDF-1.4\n";
+    const offsets = objs.map((o, i) => {
+      const at = out.length;
+      out += `${i + 1} 0 obj\n${o}\nendobj\n`;
+      return at;
+    });
+    const xref = out.length;
+    out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n \n`).join("")}`;
+    out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    return new Blob([out], { type: "application/pdf" });
+  };
+
   /**
    * Sheet: slides up on phones, centred dialog on larger screens.
    * Returns the panel element; call J.closeSheet() to dismiss.

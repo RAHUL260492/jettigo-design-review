@@ -562,7 +562,7 @@
           route: `${b.origin} → ${b.destination}`,
           aircraft: b.ref,
         })),
-        team: members.members.map((m) => ({ name: m.name || m.email, role: ROLE[m.companyRole] || "" })),
+        team: members.members.map((m) => ({ id: m.id, name: m.name || m.email, role: ROLE[m.companyRole] || "" })),
       });
     },
     init(root) {
@@ -589,6 +589,7 @@
       const inv = await api("GET", "/v1/company/invoices");
       D().invoices = inv.invoices.map((i) => ({
         date: new Date(i.issuedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        id: i.id,
         number: i.number,
         amount: i.amountCents / 100,
         status: i.status[0].toUpperCase() + i.status.slice(1),
@@ -611,7 +612,6 @@
           fail(err, el);
         }
       });
-      on(root, "click", '[data-act="pdf"]', () => J.toast("PDF export arrives with the reporting module. CSV is available now.", "info"));
     },
   });
 
@@ -619,10 +619,21 @@
     async load() {
       await companyLoad();
       const docs = (await api("GET", "/v1/company/documents")).documents;
-      D().docs = docs.map((d) => ({ kind: d.kind, id: d.id, title: d.title + (d.kind === "manifest" ? ".csv" : ""), meta: new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) }));
+      D().docs = docs.map((d) => ({ kind: d.kind, cat: d.kind, id: d.id, title: d.title + (d.kind === "manifest" ? ".csv" : ""), meta: new Date(d.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) }));
       if (!D().docs.length) D().docs = [{ title: "No documents yet", meta: "Invoices and flight manifests appear after company bookings" }];
     },
     init(root) {
+      on(root, "click", '[data-act="doc-dl"]', async (el) => {
+        const d = D().docs[+el.dataset.i];
+        if (!d || d.kind !== "invoice") return;
+        busy(el, true);
+        try {
+          await download(await api("GET", `/v1/company/documents/invoice/${d.id}`, null, { raw: true }), "invoice.csv");
+          busy(el, false);
+        } catch (err) {
+          fail(err, el);
+        }
+      });
       on(root, "click", "[data-manifest]", async (el) => {
         busy(el, true);
         try {
@@ -672,7 +683,7 @@
         }
         busy(el, true);
         try {
-          await api("POST", "/v1/partners/apply", S.partner);
+          S.applicationId = (await api("POST", "/v1/partners/apply", S.partner)).applicationId;
           await api("POST", "/v1/auth/otp", { email: S.partner.email }).then((r) => (S.opDemoCode = r.demoCode));
           busy(el, false);
           J.toast("Application submitted. Sign in to finish setting up your fleet.", "send");
@@ -689,6 +700,8 @@
       const email = root.querySelector('#op-cred input[autocomplete="username"]');
       const pw = root.querySelector("#pw");
       if (pw) pw.closest(".field").hidden = true;
+      const forgot = root.querySelector('[data-act="forgot"]');
+      if (forgot) forgot.hidden = true; // live sign-in uses one-time codes, no passwords
       if (S.partner && S.partner.email) email.value = S.partner.email;
       root.querySelector("#op-2fa p").textContent = "Enter the one-time code sent to your email.";
       const showCode = (code) => {
@@ -774,7 +787,7 @@
       op.req = reqs[0] ? card(reqs[0]) : null;
       op.queue = reqs.slice(1, 6).map((r) => {
         const c = card(r);
-        return { route: `${c.from} → ${c.to}`, meta: `${c.date} · ${c.pax} pax`, left: `${Math.floor(c.seconds / 60)}:${String(c.seconds % 60).padStart(2, "0")}` };
+        return { route: `${c.from} → ${c.to}`, meta: `${c.date} · ${c.pax} pax`, left: `${Math.floor(c.seconds / 60)}:${String(c.seconds % 60).padStart(2, "0")}`, req: c };
       });
     },
     init(root) {

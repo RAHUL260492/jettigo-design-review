@@ -296,3 +296,32 @@ describe("concierge and account", () => {
     expect((await t.app.inject({ url: "/v1/me/referral", headers: u.headers })).json().friendsJoined).toBe(1);
   });
 });
+
+describe("corporate credits, members and invoices", () => {
+  it("tops up credits (admin only) and records a paid invoice that downloads", async () => {
+    const admin = await login(t.app, "james@thompson.co");
+    const before = (await t.app.inject({ url: "/v1/company", headers: admin.headers })).json().company.creditBalanceCents;
+    const top = await t.app.inject({ method: "POST", url: "/v1/company/credits/top-up", headers: admin.headers, payload: { amountCents: 2_500_000 } });
+    expect(top.statusCode).toBe(201);
+    expect(top.json().creditBalanceCents).toBe(before + 2_500_000);
+    expect((await t.app.inject({ method: "POST", url: "/v1/company/credits/top-up", headers: admin.headers, payload: { amountCents: 5 } })).statusCode).toBe(400);
+    const traveler = await login(t.app, "john@thompson.co");
+    expect((await t.app.inject({ method: "POST", url: "/v1/company/credits/top-up", headers: traveler.headers, payload: { amountCents: 2_500_000 } })).statusCode).toBe(403);
+    const inv = (await t.app.inject({ url: "/v1/company/invoices", headers: admin.headers })).json().invoices.find((i: { amountCents: number }) => i.amountCents === 2_500_000);
+    const file = await t.app.inject({ url: `/v1/company/documents/invoice/${inv.id}`, headers: admin.headers });
+    expect(file.headers["content-type"]).toContain("text/csv");
+    expect(file.body).toContain(inv.number);
+    const outsider = await login(t.app, "outsider@example.com");
+    expect((await t.app.inject({ url: `/v1/company/documents/invoice/${inv.id}`, headers: outsider.headers })).statusCode).toBe(403);
+  });
+
+  it("removes members but never yourself", async () => {
+    const admin = await login(t.app, "james@thompson.co");
+    const add = await t.app.inject({ method: "POST", url: "/v1/company/members", headers: admin.headers, payload: { email: "temp.member@thompson.co", name: "Temp Member", role: "traveler" } });
+    const id = add.json().member.id;
+    expect((await t.app.inject({ method: "DELETE", url: `/v1/company/members/${id}`, headers: admin.headers })).json()).toEqual({ removed: true });
+    const members = (await t.app.inject({ url: "/v1/company/members", headers: admin.headers })).json().members;
+    expect(members.some((m: { id: string }) => m.id === id)).toBe(false);
+    expect((await t.app.inject({ method: "DELETE", url: `/v1/company/members/${admin.user.id}`, headers: admin.headers })).statusCode).toBe(400);
+  });
+});

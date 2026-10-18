@@ -27,26 +27,28 @@
       ],
     },
     invoices: [
-      { date: "26 Oct 2026", number: "INV-8829", amount: 24500, status: "Paid" },
-      { date: "15 Oct 2026", number: "INV-8825", amount: 18750, status: "Pending" },
-      { date: "10 Oct 2026", number: "INV-8821", amount: 31200, status: "Processing" },
+      { date: "26 Oct 2026", number: "INV-8829", amount: 24500, status: "Paid", route: "LCY → NCE", traveler: "Sarah Lee" },
+      { date: "15 Oct 2026", number: "INV-8825", amount: 18750, status: "Pending", route: "LCY → GVA", traveler: "Mark Davis" },
+      { date: "10 Oct 2026", number: "INV-8821", amount: 31200, status: "Processing", route: "LBG → DWC", traveler: "John Kim" },
     ],
     spend: { values: [18400, 24750, 31300], labels: ["Aug", "Sep", "Oct"] },
     op: {
       review: null,
       req: { from: "LCY", to: "NCE", date: "Thu 29 Oct 2026", time: "10:00", pax: 4, bags: "4 bags, 80 kg", member: "Gold member", model: "Citation Latitude", tail: "G-RVRA", range: "2,700 nm", img: "jet-latitude", standard: 12500, seconds: 14 * 60 + 22 },
       queue: [
-        { route: "FAB → GVA", meta: "Fri 30 Oct · 2 pax", left: "42:10" },
-        { route: "BQH → LBG", meta: "Sat 31 Oct · 6 pax", left: "1:12:44" },
-        { route: "LCY → PMI", meta: "Mon 2 Nov · 3 pax", left: "2:05:00" },
+        { route: "FAB → GVA", meta: "Fri 30 Oct · 2 pax", left: "42:10", req: { from: "FAB", to: "GVA", date: "Fri 30 Oct 2026", time: "09:00", pax: 2, bags: "2 bags, 30 kg", member: "", model: "Citation Latitude", tail: "G-RVRA", range: "2,700 nm", img: "jet-latitude", standard: 9800, seconds: 42 * 60 + 10 } },
+        { route: "BQH → LBG", meta: "Sat 31 Oct · 6 pax", left: "1:12:44", req: { from: "BQH", to: "LBG", date: "Sat 31 Oct 2026", time: "11:30", pax: 6, bags: "6 bags, 95 kg", member: "Elite member", model: "Citation Longitude", tail: "G-RVLN", range: "3,500 nm", img: "jet-longitude", standard: 8900, seconds: 72 * 60 + 44 } },
+        { route: "LCY → PMI", meta: "Mon 2 Nov · 3 pax", left: "2:05:00", req: { from: "LCY", to: "PMI", date: "Mon 2 Nov 2026", time: "14:00", pax: 3, bags: "3 bags, 45 kg", member: "", model: "Citation Latitude", tail: "G-RVRA", range: "2,700 nm", img: "jet-latitude", standard: 14200, seconds: 125 * 60 } },
       ],
       stats: { win: "38%", resp: "6m" },
     },
     docs: [
-      { title: "Q3 VAT Certificate.pdf", meta: "Today, 10:30 · 1.2 MB" },
-      { title: "Flight Manifest – G-JTGO.pdf", meta: "Yesterday · 850 KB" },
-      { title: "US Entry Permit.pdf", meta: "25 Oct · 2.5 MB" },
-      { title: "2025 Annual Tax Statement.pdf", meta: "25 Oct · 4.1 MB" },
+      { cat: "vat", title: "Q3 VAT Certificate.pdf", meta: "Today, 10:30" },
+      { cat: "manifest", title: "Flight Manifest – G-JTGO.pdf", meta: "Yesterday" },
+      { cat: "permit", title: "US Entry Permit.pdf", meta: "25 Oct" },
+      { cat: "tax", title: "2025 Annual Tax Statement.pdf", meta: "25 Oct" },
+      { cat: "vat", title: "Q2 VAT Certificate.pdf", meta: "3 Jul" },
+      { cat: "manifest", title: "Flight Manifest – HB-JGO.pdf", meta: "28 Jun" },
     ],
   });
   const STATUS = { Paid: ["green", "circle-check"], Pending: ["amber", "clock-3"], Processing: ["blue", "refresh-cw"] };
@@ -67,7 +69,7 @@
           <div class="row between"><span class="label">Flight credits &amp; team</span>${ic("bar-chart-3", "gold")}</div>
           <div class="row wrap gap-8" style="align-items:baseline"><span class="muted">Total balance</span><b style="font-size:34px;letter-spacing:-0.02em" class="tnum">${money(D.corp.balance)}</b></div>
           <div class="small muted">Active team members: <b style="color:#fff">${D.corp.members}</b> across all roles</div>
-          <div class="row gap-8 mt-8"><a class="btn gold sm" href="#/route">${ic("plus")} Book for team</a><button class="btn glass sm" data-toast="Top-up request sent to finance" data-icon="wallet">Top up credits</button></div>
+          <div class="row gap-8 mt-8"><a class="btn gold sm" href="#/route">${ic("plus")} Book for team</a><button class="btn glass sm" data-act="topup">Top up credits</button></div>
         </div>
         <div class="g4 gap-12">
           ${D.corp.kpis.map((k) => `<div class="card kpi"><div class="xs faint">${esc(k.label)}</div><div class="n">${esc(k.value)}</div><div class="d"${k.flat ? ' style="color:var(--text-3)"' : ""}>${esc(k.delta)}</div></div>`).join("")}
@@ -85,7 +87,7 @@
         </div>
         <div class="card pad-lg"><div class="row between"><h2 class="h2">Team management</h2><span class="small faint">${D.corp.members} members</span></div>
           <div class="list mt-8" id="team">
-            ${D.corp.team.map((t) => `<div class="person"><span class="avatar">${ph("rahul", t.name)}</span><div class="who"><b>${esc(t.name)}</b></div><span class="pill">${esc(t.role)}</span><button class="iconbtn" aria-label="Manage ${esc(t.name)}" data-toast="Permissions for ${esc(t.name)}" data-icon="user-cog">${ic("square-pen")}</button></div>`).join("")}
+            ${D.corp.team.map((t, i) => `<div class="person"><span class="avatar">${ph("rahul", t.name)}</span><div class="who"><b>${esc(t.name)}</b></div><span class="pill">${esc(t.role)}</span><button class="iconbtn" aria-label="Manage ${esc(t.name)}" data-act="manage" data-i="${i}">${ic("square-pen")}</button></div>`).join("")}
           </div>
           <button class="btn block mt-16" data-act="add">${ic("user-plus")} Add new traveler</button>
           <form id="addf" class="stack gap-12 mt-16" hidden><input class="input" id="nn" placeholder="Full name" aria-label="Full name" required><input class="input" id="ne" type="email" placeholder="Work email" aria-label="Work email" required><div class="seg block sm" id="nr"><button type="button" class="on" data-v="traveler">Traveler</button><button type="button" data-v="booker">Booker</button><button type="button" data-v="admin">Admin</button></div><button class="btn ghost block">Send invitation</button></form>
@@ -93,6 +95,88 @@
       </div>
     </div>`,
     init(root) {
+      const live = J.live && J.live.on;
+      const ROLES = [["admin", "Administrator"], ["booker", "Booker"], ["traveler", "Traveler"]];
+      root.querySelector('[data-act="topup"]').addEventListener("click", () => {
+        let amount = 100000;
+        J.sheet({
+          title: "Top up flight credits",
+          body: `<p class="small muted">Current balance <b style="color:var(--ink)">${money(D.corp.balance)}</b>. Credits are charged to your company card on file${live ? " (test mode, no charge)" : ""}.</p>
+            <div class="row wrap gap-8" id="amts">${[25000, 100000, 250000].map((a) => `<button type="button" class="chip" data-a="${a}" aria-pressed="${a === amount}" style="${a === amount ? "background:var(--navy-900);color:#fff;border-color:var(--navy-900)" : ""}">${money(a)}</button>`).join("")}</div>
+            <label class="field"><span>Or enter an amount (USD)</span><div class="affix"><b>$</b><input class="input" id="amt" inputmode="numeric" value="100,000"></div></label>
+            <button type="button" class="btn block lg" data-v="confirm">Add credits</button>`,
+          onOpen(panel) {
+            const input = panel.querySelector("#amt");
+            panel.addEventListener("click", async (e) => {
+              const chip = e.target.closest("[data-a]");
+              if (chip) {
+                amount = +chip.dataset.a;
+                input.value = amount.toLocaleString("en-US");
+                panel.querySelectorAll("[data-a]").forEach((c) => (c.style.cssText = c === chip ? "background:var(--navy-900);color:#fff;border-color:var(--navy-900)" : ""));
+              }
+              const go = e.target.closest('[data-v="confirm"]');
+              if (!go) return;
+              amount = +input.value.replace(/[^\d]/g, "");
+              if (!amount || amount < 1000 || amount > 1000000) return J.toast("Enter an amount between $1,000 and $1,000,000", "info");
+              go.classList.add("is-loading");
+              try {
+                if (live) await J.live.api("POST", "/v1/company/credits/top-up", { amountCents: amount * 100 });
+                else D.corp.balance += amount;
+                J.closeSheet();
+                J.toast(`${money(amount)} added to your flight credits`, "wallet");
+                J.rerender();
+              } catch (err) {
+                go.classList.remove("is-loading");
+                J.toast(err.message, "circle-alert");
+              }
+            });
+            input.addEventListener("input", () => panel.querySelectorAll("[data-a]").forEach((c) => (c.style.cssText = "")));
+          },
+        });
+      });
+      root.addEventListener("click", (e) => {
+        const btn = e.target.closest('[data-act="manage"]');
+        if (!btn) return;
+        const m = D.corp.team[+btn.dataset.i];
+        let role = (ROLES.find(([, l]) => l === m.role) || ROLES[2])[0];
+        J.sheet({
+          title: `Manage ${m.name}`,
+          body: `<span class="small muted">Role</span>
+            <div class="seg block" id="mrole">${ROLES.map(([v, l]) => `<button type="button" class="${v === role ? "on" : ""}" data-v="${v}">${l}</button>`).join("")}</div>
+            <p class="small muted" id="mhelp"></p>
+            <button type="button" class="btn block lg" data-v="save">Save changes</button>
+            <button type="button" class="btn danger-ghost block" data-v="remove">Remove from team</button>`,
+          onOpen(panel) {
+            const HELP = { admin: "Full access: credits, invoices, team and bookings.", booker: "Can book for anyone in the company and see invoices.", traveler: "Can book their own trips on the company account." };
+            const help = () => (panel.querySelector("#mhelp").textContent = HELP[role]);
+            help();
+            panel.querySelector("#mrole").addEventListener("seg", (ev) => { role = ev.detail; help(); });
+            panel.addEventListener("click", async (ev) => {
+              const save = ev.target.closest('[data-v="save"]');
+              const remove = ev.target.closest('[data-v="remove"]');
+              if (!save && !remove) return;
+              const b = save || remove;
+              b.classList.add("is-loading");
+              try {
+                if (live) {
+                  if (save) await J.live.api("PATCH", `/v1/company/members/${m.id}`, { role });
+                  else await J.live.api("DELETE", `/v1/company/members/${m.id}`);
+                } else if (save) m.role = ROLES.find(([v]) => v === role)[1];
+                else {
+                  D.corp.team.splice(D.corp.team.indexOf(m), 1);
+                  D.corp.members -= 1;
+                }
+                J.closeSheet();
+                J.toast(save ? `${m.name} is now ${ROLES.find(([v]) => v === role)[1].toLowerCase()}` : `${m.name} removed from the team`, save ? "user-cog" : "user-minus");
+                J.rerender();
+              } catch (err) {
+                b.classList.remove("is-loading");
+                J.toast(err.message, "circle-alert");
+              }
+            });
+          },
+        });
+      });
       root.querySelector('[data-act="add"]').addEventListener("click", () => {
         root.querySelector("#addf").hidden = false;
         root.querySelector("#nn").focus();
@@ -120,20 +204,63 @@
     body: () => `<div class="seg block" id="tabs" style="max-width:420px"><button class="on" data-v="inv">Invoices</button><button data-v="rep">Reports</button></div>
       <div class="split mt-24">
         <div class="stack gap-12" id="p-inv">
-          ${D.invoices.length ? D.invoices.map((r) => { const [cls, icon] = STATUS[r.status] || STATUS.Pending; return `<div class="card row between"><div class="stack gap-8"><div class="xs faint">${esc(r.date)} · ${esc(r.number)}</div><div class="row gap-12"><b style="font-size:22px" class="tnum">${r.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}</b><span class="pill ${cls}">${ic(icon)} ${esc(r.status)}</span></div></div><button class="sq-btn ghost" aria-label="Download ${esc(r.number)}" data-toast="${esc(r.number)}.pdf downloaded" data-icon="download">${ic("file-down")}</button></div>`; }).join("") : `<div class="card"><p class="small muted">No invoices yet. They appear here after company bookings.</p></div>`}
+          ${D.invoices.length ? D.invoices.map((r) => { const [cls, icon] = STATUS[r.status] || STATUS.Pending; return `<div class="card row between"><div class="stack gap-8"><div class="xs faint">${esc(r.date)} · ${esc(r.number)}</div><div class="row gap-12"><b style="font-size:22px" class="tnum">${r.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}</b><span class="pill ${cls}">${ic(icon)} ${esc(r.status)}</span></div></div><button class="sq-btn ghost" aria-label="Download ${esc(r.number)}" data-act="inv-dl" data-i="${D.invoices.indexOf(r)}">${ic("file-down")}</button></div>`; }).join("") : `<div class="card"><p class="small muted">No invoices yet. They appear here after company bookings.</p></div>`}
           ${(() => { const v = D.spend.values, total = v.reduce((a, b) => a + b, 0); return v.length > 1 ? `<div class="card pad-lg"><h2 class="h2">Spending trend</h2><div class="mt-16">${J.chart(v.map((x) => x / 1000), D.spend.labels, { prefix: "" })}</div><div class="row between small mt-8"><span class="muted">Total <b style="color:var(--text)">${total.toLocaleString("en-US", { style: "currency", currency: "USD" })}</b></span><span class="muted">Avg. monthly <b style="color:var(--text)">${(total / v.length).toLocaleString("en-US", { style: "currency", currency: "USD" })}</b></span></div></div>` : ""; })()}
         </div>
         <div class="stack gap-12" id="p-rep" hidden>
-          ${[["Q3 2026 travel summary", "Trips, spend and CO₂ by department"], ["Traveler activity", "Per-person flights and policy exceptions"], ["VAT reclaim pack", "Invoices grouped by jurisdiction"]].map((r) => `<div class="card row between"><div class="row gap-12"><span class="folder">${ic("file-bar-chart")}</span><div><b>${r[0]}</b><div class="small muted">${r[1]}</div></div></div><button class="sq-btn ghost" aria-label="Download" data-toast="Report exported" data-icon="download">${ic("download")}</button></div>`).join("")}
+          ${[["Travel summary", "Every trip with route, traveler and amount"], ["Traveler activity", "Spend and trips per traveler"], ["VAT reclaim pack", "Invoices with status, for your accountant"]].map((r, i) => `<div class="card row between"><div class="row gap-12"><span class="folder">${ic("file-bar-chart")}</span><div><b>${r[0]}</b><div class="small muted">${r[1]}</div></div></div><button class="sq-btn ghost" aria-label="Download ${r[0]}" data-act="rep-dl" data-i="${i}">${ic("download")}</button></div>`).join("")}
         </div>
         <div class="card pad-lg stack gap-12 sticky"><h2 class="h2">Generate custom report</h2>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Start date</span><input class="input" id="rfrom" type="date" value="2026-07-01"></label><label class="field"><span>End date</span><input class="input" id="rto" type="date" value="2026-09-30"></label></div>
           <label class="field"><span>Group by</span><select class="input"><option>Department</option><option>Traveler</option><option>Aircraft category</option></select></label>
           <span class="small muted">Export format</span>
-          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><button class="btn" data-act="pdf" data-toast="Report_Q3_2026.pdf exported" data-icon="file-down">Export PDF</button><button class="btn ghost" data-act="csv" data-toast="Report_Q3_2026.csv exported" data-icon="sheet">Export CSV</button></div>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><button class="btn" data-act="pdf">Export PDF</button><button class="btn ghost" data-act="csv">Export CSV</button></div>
         </div>
       </div>`,
     init(root) {
+      const live = J.live && J.live.on;
+      const usd = (n) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+      const rows = () => D.invoices.map((r) => [r.date, r.number, r.traveler || "", r.route || "", r.status, r.amount.toFixed(2)]);
+      const HEAD = ["Date", "Invoice", "Traveler", "Route", "Status", "Amount (USD)"];
+      root.addEventListener("click", async (e) => {
+        const inv = e.target.closest('[data-act="inv-dl"]');
+        if (inv) {
+          const r = D.invoices[+inv.dataset.i];
+          if (live && r.id) {
+            inv.classList.add("is-loading");
+            try {
+              const res = await J.live.api("GET", `/v1/company/documents/invoice/${r.id}`, null, { raw: true });
+              J.download(`${r.number}.csv`, await res.blob());
+            } catch (err) { J.toast(err.message, "circle-alert"); }
+            inv.classList.remove("is-loading");
+            return;
+          }
+          J.download(`${r.number}.pdf`, J.pdf(`Invoice ${r.number}`, [`Billed to: ${D.corp.name}`, `Date: ${r.date}`, `Traveler: ${r.traveler || "-"}`, `Route: ${r.route || "-"}`, `Status: ${r.status}`, "", `Amount due: ${usd(r.amount)}`, "", "Jettingo · Private aviation"]));
+          return J.toast(`${r.number}.pdf downloaded`, "file-down");
+        }
+        const rep = e.target.closest('[data-act="rep-dl"]');
+        if (rep) {
+          const i = +rep.dataset.i;
+          const by = {};
+          D.invoices.forEach((r) => { const k = r.traveler || "Unassigned"; by[k] = by[k] || [0, 0]; by[k][0] += 1; by[k][1] += r.amount; });
+          const files = [
+            ["jettingo-travel-summary.csv", [HEAD, ...rows()]],
+            ["jettingo-traveler-activity.csv", [["Traveler", "Trips", "Spend (USD)"], ...Object.entries(by).map(([k, [n, a]]) => [k, n, a.toFixed(2)])]],
+            ["jettingo-vat-pack.csv", [["Invoice", "Date", "Status", "Amount (USD)"], ...D.invoices.map((r) => [r.number, r.date, r.status, r.amount.toFixed(2)])]],
+          ];
+          J.download(files[i][0], J.csv(files[i][1]), "text/csv;charset=utf-8");
+          return J.toast(`${files[i][0]} downloaded`, "download");
+        }
+        if (e.target.closest('[data-act="pdf"]')) {
+          const total = D.invoices.reduce((a, r) => a + r.amount, 0);
+          J.download("jettingo-report.pdf", J.pdf(`${D.corp.name} · travel report`, [`Period: ${root.querySelector("#rfrom").value} to ${root.querySelector("#rto").value}`, "", ...D.invoices.map((r) => `${r.date}   ${r.number}   ${r.route || ""}   ${r.status}   ${usd(r.amount)}`), "", `Total: ${usd(total)}`]));
+          return J.toast("jettingo-report.pdf downloaded", "file-down");
+        }
+        if (!live && e.target.closest('[data-act="csv"]')) {
+          J.download("jettingo-report.csv", J.csv([HEAD, ...rows()]), "text/csv;charset=utf-8");
+          return J.toast("jettingo-report.csv downloaded", "sheet");
+        }
+      });
       root.querySelector("#tabs").addEventListener("seg", (e) => {
         root.querySelector("#p-inv").hidden = e.detail !== "inv";
         root.querySelector("#p-rep").hidden = e.detail !== "rep";
@@ -153,27 +280,50 @@
       <div class="split mt-24">
         <div><h2 class="h2">Recent documents</h2>
           <div class="list card mt-12" style="padding:0 16px" id="docs">
-            ${D.docs.map((d) => `<div class="row between doc"><div class="row gap-12" style="min-width:0">${ic("file-text", "faint")}<div style="min-width:0"><b class="small" style="font-size:15px">${esc(d.title)}</b><div class="xs faint">${esc(d.meta)}</div></div></div><div class="row gap-8"><button class="sq-btn" aria-label="Download ${esc(d.title)}" ${d.kind === "manifest" ? `data-manifest="${esc(d.id)}"` : `data-toast="${esc(d.title)} downloaded" data-icon="download"`}>${ic("download")}</button><button class="sq-btn" aria-label="Share" data-toast="Secure link copied" data-icon="link">${ic("share")}</button></div></div>`).join("")}
+            ${D.docs.map((d) => `<div class="row between doc" data-cat="${esc(d.cat || d.kind || "")}"><div class="row gap-12" style="min-width:0">${ic("file-text", "faint")}<div style="min-width:0"><b class="small" style="font-size:15px">${esc(d.title)}</b><div class="xs faint">${esc(d.meta)}</div></div></div><div class="row gap-8"><button class="sq-btn" aria-label="Download ${esc(d.title)}" ${d.kind === "manifest" ? `data-manifest="${esc(d.id)}"` : `data-act="doc-dl" data-i="${D.docs.indexOf(d)}"`}>${ic("download")}</button><a class="sq-btn" aria-label="Email ${esc(d.title)}" href="mailto:?subject=${encodeURIComponent(`Jettingo document: ${d.title}`)}&body=${encodeURIComponent(`Please find "${d.title}" from our Jettingo account.`)}">${ic("mail")}</a></div></div>`).join("")}
             <p class="small muted" id="none" hidden>No documents match your search.</p>
           </div>
         </div>
         <div><h2 class="h2">Document categories</h2>
           <div class="list mt-12">
-            ${[["VAT certificates", 12], ["Flight manifests", 8], ["International permits", 4], ["Annual tax statements", 2]].map((c) => `<button class="row gap-12" style="width:100%;text-align:left" data-toast="Opening ${c[0]}" data-icon="folder-open"><span class="folder">${ic("folder")}</span><b class="grow">${c[0]}</b><span class="small faint">${c[1]} documents</span>${ic("chevron-right", "faint")}</button>`).join("")}
+            ${[["vat", "VAT certificates"], ["manifest", "Flight manifests"], ["permit", "International permits"], ["tax", "Annual tax statements"], ["invoice", "Invoices"]].map(([k, l]) => [k, l, D.docs.filter((d) => (d.cat || d.kind) === k).length]).filter(([k, , n]) => n || k !== "invoice").map(([k, l, n]) => `<button class="row gap-12" style="width:100%;text-align:left" data-act="doc-cat" data-cat="${k}" aria-pressed="false"><span class="folder">${ic("folder")}</span><b class="grow">${l}</b><span class="small faint">${n} document${n === 1 ? "" : "s"}</span>${ic("chevron-right", "faint")}</button>`).join("")}
           </div>
         </div>
       </div>`,
     init(root) {
-      root.querySelector("#q").addEventListener("input", (e) => {
-        const q = e.target.value.toLowerCase();
+      let cat = "";
+      const filter = () => {
+        const q = root.querySelector("#q").value.toLowerCase();
         let shown = 0;
         root.querySelectorAll(".doc").forEach((d) => {
-          const hit = d.textContent.toLowerCase().includes(q);
+          const hit = d.textContent.toLowerCase().includes(q) && (!cat || d.dataset.cat === cat);
           d.hidden = !hit;
           shown += hit;
         });
         root.querySelector("#none").hidden = shown > 0;
+        root.querySelectorAll('[data-act="doc-cat"]').forEach((b) => {
+          b.setAttribute("aria-pressed", b.dataset.cat === cat);
+          b.style.background = b.dataset.cat === cat ? "var(--gold-100)" : "";
+        });
+        const label = root.querySelector('[data-act="doc-cat"][aria-pressed="true"] b');
+        let note = root.querySelector("#catnote");
+        if (!note) { root.querySelector("#docs").insertAdjacentHTML("beforebegin", `<div class="row between mt-8" id="catnote"></div>`); note = root.querySelector("#catnote"); }
+        note.innerHTML = cat ? `<span class="small muted">Showing ${label ? label.textContent : ""}</span><button type="button" class="small link" data-act="doc-all">Show all</button>` : "";
+      };
+      root.addEventListener("click", (e) => {
+        const c = e.target.closest('[data-act="doc-cat"]');
+        if (c) { cat = cat === c.dataset.cat ? "" : c.dataset.cat; return filter(); }
+        if (e.target.closest('[data-act="doc-all"]')) { cat = ""; return filter(); }
+        const dl = e.target.closest('[data-act="doc-dl"]');
+        if (dl) {
+          const d = D.docs[+dl.dataset.i];
+          if (J.live && J.live.on && d.kind === "invoice") return; // handled by live mode
+          const name = d.title.replace(/\.pdf$/i, "") + ".pdf";
+          J.download(name, J.pdf(d.title.replace(/\.pdf$/i, ""), [`Company: ${D.corp.name}`, `Issued: ${d.meta}`, "", "This document is a demo copy generated by the Jettingo prototype."]));
+          J.toast(`${name} downloaded`, "download");
+        }
       });
+      root.querySelector("#q").addEventListener("input", filter);
     },
   });
 
@@ -335,12 +485,42 @@
           </div>
         </div>
         <p class="center small" style="opacity:.75">${ic("shield-check", "gold")} 2FA required for enhanced security</p>
-        <button class="small" style="opacity:.7;align-self:center" data-toast="Reset link sent to ops@rivieraair.com" data-icon="mail">Forgot password?</button>
-        <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn glass round" href="#/partner">Become a partner</a><button class="btn glass round" data-toast="Application status: under review" data-icon="hourglass">Application status</button></div>
+        <button type="button" class="small" style="opacity:.7;align-self:center" data-act="forgot">Forgot password?</button>
+        <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn glass round" href="#/partner">Become a partner</a><button type="button" class="btn glass round" data-act="appstatus">Application status</button></div>
       </div>
     </div>`,
     init(root) {
-      root.addEventListener("click", (e) => {
+      root.addEventListener("click", async (e) => {
+        if (e.target.closest('[data-act="forgot"]')) {
+          const email = root.querySelector('#op-cred input[autocomplete="username"]').value;
+          return J.sheet({
+            title: "Reset your password",
+            body: `<p class="small muted">Enter your operator email and we'll send a secure link to set a new password.</p>
+              <input class="input" id="remail" type="email" value="${J.esc(email)}" aria-label="Operator email">
+              <button type="button" class="btn block lg" data-v="send">Send reset link</button>`,
+            onOpen(panel) {
+              panel.querySelector('[data-v="send"]').addEventListener("click", () => {
+                const v = panel.querySelector("#remail").value.trim();
+                if (!/\S+@\S+\.\S+/.test(v)) return J.toast("Enter a valid email", "info");
+                panel.querySelector(".sheet-body").innerHTML = `<div class="stack gap-12 center" style="padding:8px 0"><span class="check-big">${ic("mail-check")}</span><b>Check your inbox</b><p class="small muted">If ${J.esc(v)} is registered, a reset link is on its way. It expires in 30 minutes.</p><button type="button" class="btn ghost block" data-sheet-close>Back to sign in</button></div>`;
+                J.icons(panel);
+              });
+            },
+          });
+        }
+        if (e.target.closest('[data-act="appstatus"]')) {
+          let status = "pending";
+          const id = J.state.applicationId;
+          if (J.live && J.live.on && id) {
+            try { status = (await J.live.api("GET", `/v1/partners/applications/${id}`)).status; } catch { /* show default */ }
+          }
+          const steps = [["Application received", "We have your company details and documents.", true], ["Compliance review", "Licence, insurance and safety checks. Usually within 48 hours.", status !== "pending"], ["Approved", status === "rejected" ? "Not approved. Contact partners@jettingo.com." : "You can start receiving quote requests.", status === "approved"]];
+          return J.sheet({
+            title: "Application status",
+            body: `<div class="steps-v">${steps.map(([t, d, done], i) => `<div class="s ${done ? "done" : !steps[i - 1] || steps[i - 1][2] ? "now" : ""}"><i></i><div><b>${t}</b><p class="small muted">${d}</p></div></div>`).join("")}</div>
+              ${!id && J.live && J.live.on ? `<p class="xs faint">Applied from another device? Sign in with your operator email to see your live status.</p>` : ""}`,
+          });
+        }
         const a = e.target.closest("[data-act]");
         if (!a) return;
         if (a.dataset.act === "eye") {
@@ -367,7 +547,7 @@
     shell: "partner",
     nav: "quotes",
     back: "op-login",
-    action: () => `<button class="iconbtn" aria-label="Notifications" data-toast="2 new requests in the last hour" data-icon="bell">${ic("bell")}</button>`,
+    action: () => `<button class="iconbtn" aria-label="Notifications" data-act="notifs">${ic("bell")}${D.op.queue.length ? '<span class="badge"></span>' : ""}</button>`,
     body: () => {
       const op = D.op, r = op.req;
       const main = op.review
@@ -394,12 +574,33 @@
       <div class="stack gap-16">
         <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><div class="card kpi"><div class="xs faint">Win rate (30d)</div><div class="n">${esc(op.stats.win)}</div></div><div class="card kpi"><div class="xs faint">Avg. response</div><div class="n">${esc(op.stats.resp)}</div></div></div>
         <div class="card"><div class="row between"><b>Queue</b><span class="pill">${op.queue.length}</span></div><div class="list mt-8">
-          ${op.queue.length ? op.queue.map((q) => `<button class="row between" style="width:100%;text-align:left" data-toast="Opening ${esc(q.route)}" data-icon="inbox"><div><b>${esc(q.route)}</b><div class="xs faint">${esc(q.meta)}</div></div><span class="small faint tnum">${esc(q.left)}</span></button>`).join("") : `<p class="small muted">Nothing else waiting.</p>`}
+          ${op.queue.length ? op.queue.map((q, i) => `<button class="row between" style="width:100%;text-align:left" data-act="open-req" data-i="${i}" aria-label="Open request ${esc(q.route)}"><div><b>${esc(q.route)}</b><div class="xs faint">${esc(q.meta)}</div></div><span class="small faint tnum">${esc(q.left)}</span></button>`).join("") : `<p class="small muted">Nothing else waiting.</p>`}
         </div></div>
       </div>
     </div>`;
     },
     init(root) {
+      root.addEventListener("click", (e) => {
+        if (e.target.closest('[data-act="notifs"]')) {
+          return J.notifications("Operator updates", [
+            ...D.op.queue.map((q) => ["inbox", `New request: ${q.route}`, `${q.meta} · respond within ${q.left}`, true]),
+            ["badge-check", "Verification complete", "Your operator profile is approved", false],
+            ["banknote", "Payout sent", "Last completed trip has been paid out", false],
+          ]);
+        }
+        const open = e.target.closest('[data-act="open-req"]');
+        if (open) {
+          // Swap the selected queue item with the request in focus.
+          const i = +open.dataset.i;
+          const picked = D.op.queue[i];
+          if (D.op.req) {
+            const r = D.op.req;
+            D.op.queue[i] = { route: `${r.from} → ${r.to}`, meta: `${r.date} · ${r.pax} pax`, left: `${Math.floor(r.seconds / 60)}:${String(r.seconds % 60).padStart(2, "0")}`, req: r };
+          } else D.op.queue.splice(i, 1);
+          D.op.req = picked.req;
+          J.rerender();
+        }
+      });
       if (!D.op.req || D.op.review) return;
       let left = D.op.req.seconds;
       J.every(1000, () => {
