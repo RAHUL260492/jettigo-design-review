@@ -9,7 +9,7 @@
       .map((l, i) => `<div class="st ${i < on ? "done" : i === on ? "on" : ""}"><span class="dot">${i < on ? ic("check") : ""}</span>${l}</div>`)
       .join("")}</div>`;
   };
-  const when = () => `${J.dow(S.day)} ${S.day} Oct`;
+  const when = () => `${J.dow()} ${S.date.d} ${J.MONTHS[S.date.m]}`;
   const legs = () => `${J.code(S.origin)} → ${J.code(S.dest)}`;
   J.when = when; J.legs = legs;
   const tripLine = () => `${when()} · ${S.time} · ${S.pax} passenger${S.pax > 1 ? "s" : ""}`;
@@ -43,7 +43,7 @@
           <div class="search-widget" role="search">
             <a class="sw" href="#/route"><div class="lbl">From</div><div class="val">London City (LCY)</div></a>
             <a class="sw" href="#/route"><div class="lbl">To</div><div class="val">Nice Côte d'Azur (NCE)</div></a>
-            <a class="sw" href="#/route"><div class="lbl">Departure</div><div class="val">Thu 29 Oct · 10:00</div></a>
+            <a class="sw" href="#/route"><div class="lbl">Departure</div><div class="val">${when()} · ${S.time}</div></a>
             <a class="sw" href="#/route"><div class="lbl">Passengers</div><div class="val">4 adults</div></a>
             <a class="btn" href="#/jets">${ic("search")} Search jets</a>
           </div>
@@ -73,7 +73,7 @@
         <div class="row between wrap"><div class="stack gap-8"><span class="label">The fleet</span><h2 class="h1">Aircraft for every journey</h2></div><a class="btn ghost round" href="#/fleet">View the fleet ${ic("arrow-right")}</a></div>
         <div class="carousel mt-24">
           ${["global7500", "g650", "longitude"].map((k) => {
-            const j = J.jets[k];
+            const j = J.demoJets[k];
             return `<a class="card flush hover" href="#/fleet">${ph(j.img, j.name, "", "aspect-ratio:16/9")}<div style="padding:16px"><div class="h3">${j.name}</div><div class="muted small">${j.cls} · Up to ${j.pax} guests · ${j.range}</div></div></a>`;
           }).join("")}
         </div>
@@ -189,14 +189,25 @@
 
   /* =============== Booking: route =============== */
   function calendar() {
-    const first = 4; // 1 Oct 2026 is a Thursday (Sun = 0)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const v = S.view || (S.view = { y: S.date.y, m: S.date.m });
+    const first = new Date(v.y, v.m, 1).getDay();
+    const days = new Date(v.y, v.m + 1, 0).getDate();
+    const monthIdx = (x) => x.y * 12 + x.m;
+    const canPrev = monthIdx(v) > monthIdx({ y: today.getFullYear(), m: today.getMonth() });
+    const canNext = monthIdx(v) < monthIdx({ y: today.getFullYear(), m: today.getMonth() }) + 11;
     let cells = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => `<span class="dow">${d}</span>`).join("");
     for (let i = 0; i < first; i++) cells += "<span></span>";
-    for (let d = 1; d <= 31; d++) {
-      cells += `<button data-day="${d}" class="${d === S.day ? "on" : ""} ${d === 18 ? "today" : ""}" ${d < 18 ? "disabled" : ""} aria-label="${d} October">${d}</button>`;
+    for (let d = 1; d <= days; d++) {
+      const date = new Date(v.y, v.m, d);
+      const on = S.date.y === v.y && S.date.m === v.m && S.date.d === d;
+      const isToday = date.getTime() === today.getTime();
+      cells += `<button data-day="${d}" class="${on ? "on" : ""} ${isToday ? "today" : ""}" ${date < today ? "disabled" : ""} aria-label="${d} ${J.MONTHS[v.m]}">${d}</button>`;
     }
-    return `<div class="card cal">
-      <div class="row between" style="padding:4px 4px 10px"><button class="iconbtn" aria-label="Previous month" data-toast="Earlier dates are unavailable" data-icon="info">${ic("chevron-left")}</button><b>October 2026</b><button class="iconbtn" aria-label="Next month" data-toast="November opens in the full build" data-icon="info">${ic("chevron-right")}</button></div>
+    const monthName = new Date(v.y, v.m, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
+    return `<div class="card cal" id="calcard">
+      <div class="row between" style="padding:4px 4px 10px"><button class="iconbtn" data-cal="-1" aria-label="Previous month" ${canPrev ? "" : "disabled"}>${ic("chevron-left")}</button><b>${monthName}</b><button class="iconbtn" data-cal="1" aria-label="Next month" ${canNext ? "" : "disabled"}>${ic("chevron-right")}</button></div>
       <div class="cal-grid" id="cal">${cells}</div>
       <div class="divider"></div>
       <div class="row" style="padding:2px 6px">${ic("clock-3")}<select class="grow" id="time" aria-label="Departure time" style="border:0;background:none;font-weight:600">${["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "16:00"].map((t) => `<option ${t === S.time ? "selected" : ""}>${t}</option>`).join("")}</select><span class="pill">Local time</span></div>
@@ -258,11 +269,20 @@
       org.value = S.origin; dst.value = S.dest;
       org.onchange = () => { S.origin = org.value; upd(); };
       dst.onchange = () => { S.dest = dst.value; upd(); };
-      root.querySelector("#cal").addEventListener("click", (e) => {
-        const b = e.target.closest("button[data-day]");
+      root.addEventListener("click", (e) => {
+        const nav = e.target.closest("[data-cal]");
+        if (nav && !nav.disabled) {
+          const v = new Date(S.view.y, S.view.m + +nav.dataset.cal, 1);
+          S.view = { y: v.getFullYear(), m: v.getMonth() };
+          root.querySelector("#calcard").outerHTML = calendar();
+          J.icons(root);
+          root.querySelector("#time").onchange = (ev) => { S.time = ev.target.value; upd(); };
+          return;
+        }
+        const b = e.target.closest("#cal button[data-day]");
         if (!b || b.disabled) return;
         root.querySelectorAll("#cal button").forEach((x) => x.classList.toggle("on", x === b));
-        S.day = +b.dataset.day; upd();
+        S.date = { y: S.view.y, m: S.view.m, d: +b.dataset.day }; upd();
       });
       root.querySelector("#trip-type").addEventListener("seg", (e) => {
         if (e.detail === "one") return;
@@ -309,7 +329,7 @@
     action: () => `<a class="iconbtn" href="#/membership" aria-label="Account">${ic("circle-user-round")}</a>`,
     body: () => `${progress(1)}
       <div class="route-banner mt-16"><div><div class="r">${J.city(S.origin)} (${J.code(S.origin)}) → ${J.city(S.dest)} (${J.code(S.dest)})</div><div class="m">${tripLine()}</div></div><a class="btn glass sm" href="#/route">${ic("pencil")} Edit</a></div>
-      <a class="card row between hover mt-16" href="#/compare" style="border-color:var(--gold-200);background:var(--gold-100)"><div class="row gap-12"><span class="folder" style="background:var(--gold)">${ic("scale")}</span><div><b>3 operator quotes received</b><div class="small muted">Compare aircraft, cabin and price side by side</div></div></div>${ic("chevron-right")}</a>
+      <a class="card row between hover mt-16" href="#/compare" style="border-color:var(--gold-200);background:var(--gold-100)"><div class="row gap-12"><span class="folder" style="background:var(--gold)">${ic("scale")}</span><div><b>${Object.keys(J.jets).length} operator quotes received</b><div class="small muted">Compare aircraft, cabin and price side by side</div></div></div>${ic("chevron-right")}</a>
       <div class="row wrap gap-8 mt-16"><button class="chip" data-f="all" style="background:var(--navy-900);color:#fff;border-color:var(--navy-900)">All jets</button><button class="chip" data-f="mid">Midsize</button><button class="chip" data-f="heavy">Heavy</button><button class="chip" data-f="ulr">Ultra-long range</button><span class="grow"></span><span class="small faint">Sorted by recommended</span></div>
       <div class="g2 mt-16">${Object.keys(J.jets).map(jetCard).join("")}</div>`,
     init(root) {
@@ -334,11 +354,20 @@
     nav: "route",
     back: "jets",
     body: () => {
-      const opts = [
-        { k: "g650", tag: `<span class="pill gold">Recommended</span>`, amen: "Wi-Fi, full-flat bed, shower", bag: "195 cu ft · ~15 bags", rating: "4.9 / 5", op: "Gold operator" },
-        { k: "global7500", tag: `<span class="pill">Most space</span>`, amen: "4K cinema, conference suite, full galley", bag: "195 cu ft · ~18 bags", rating: "5.0 / 5", op: "Platinum operator" },
-        { k: "falcon8x", tag: `<span class="pill green">Best value</span>`, amen: "Ka-band Wi-Fi, lounge, en-suite", bag: "140 cu ft · ~13 bags", rating: "4.8 / 5", op: "Silver operator" },
-      ];
+      const live = J.live && J.live.on;
+      const opts = live
+        ? Object.keys(J.jets).slice(0, 3).map((k, i, arr) => {
+            const j = J.jets[k];
+            const cheapest = arr.every((x) => J.jets[x].est >= j.est);
+            const tag = cheapest ? `<span class="pill green">Best value</span>` : i === 0 ? `<span class="pill gold">Recommended</span>` : `<span class="pill">${J.esc(j.cls)}</span>`;
+            return { k, tag, amen: J.esc(j.amenText || "—"), bag: j.bagText || "—", rating: `${j.rating} / 5`, op: J.esc(j.opName || "") };
+          })
+        : [
+            { k: "g650", tag: `<span class="pill gold">Recommended</span>`, amen: "Wi-Fi, full-flat bed, shower", bag: "195 cu ft · ~15 bags", rating: "4.9 / 5", op: "Gold operator" },
+            { k: "global7500", tag: `<span class="pill">Most space</span>`, amen: "4K cinema, conference suite, full galley", bag: "195 cu ft · ~18 bags", rating: "5.0 / 5", op: "Platinum operator" },
+            { k: "falcon8x", tag: `<span class="pill green">Best value</span>`, amen: "Ka-band Wi-Fi, lounge, en-suite", bag: "140 cu ft · ~13 bags", rating: "4.8 / 5", op: "Silver operator" },
+          ];
+      if (!opts.length) return `<div class="card center stack gap-12" style="padding:32px"><b>No quotes available</b><p class="small muted">No aircraft can fly this trip with your party size. Try another date or fewer passengers.</p><a class="btn" href="#/route">Edit search</a></div>`;
       const cell = (fn, cls = "") => opts.map((o, i) => `<div class="${i === 0 ? "best " : ""}${cls}">${fn(o, J.jets[o.k])}</div>`).join("");
       return `<p class="muted mob-only" style="margin-bottom:12px">Swipe the table to see every option.</p>
       <div class="compare">
@@ -449,7 +478,7 @@
     nav: "route",
     back: "travelers",
     cta: () => `<div class="grow"><div class="xs faint">Service summary</div><b>Added: <span id="amen-t">${money(J.amenTotal())}</span></b></div><a class="btn lg" href="#/pay" style="flex:1.2">Save &amp; continue</a>`,
-    body: () => `<div class="banner-img">${ph("cabin-amen", "Cabin interior")}<div class="cap"><div class="label" style="color:var(--gold-200)">${J.jets[S.jet].name}</div><div class="h1">Make the cabin yours</div></div></div>
+    body: () => `<div class="banner-img">${ph("cabin-amen", "Cabin interior")}<div class="cap"><div class="label" style="color:var(--gold-200)">${J.jet().name}</div><div class="h1">Make the cabin yours</div></div></div>
       <div class="section"><div class="row gap-8">${ic("utensils")}<h2 class="h2" style="margin:0">Dining</h2></div><div class="g2 mt-16">
         ${amen("menu", "food", "Gourmet tasting menu", "Multi-course menu by Michelin-starred chefs", 0)}
         ${amen("wine", "wine", "Fine wines &amp; spirits", "Rare vintages and premium spirits", J.amenities.wine)}
@@ -474,9 +503,9 @@
   });
 
   /* =============== Review & pay =============== */
-  const total = () => J.jets[S.jet].est + J.amenTotal() + J.fees;
+  const total = () => J.jet().est + J.amenTotal() + J.fees;
   const priceCard = () => {
-    const j = J.jets[S.jet];
+    const j = J.jet();
     return `<div class="card pad-lg stack gap-8 sticky">
       <div class="row gap-12">${ph(j.img, j.name, "", "width:84px;height:56px;border-radius:8px;flex:none")}<div><b>${j.name}</b><div class="small faint">${j.cls}</div></div></div>
       <div class="divider"></div>
@@ -510,7 +539,7 @@
             <div id="pm-card" class="card stack gap-12">
               <label class="field"><span>Card number</span><input class="input" value="4242 4242 4242 1234" inputmode="numeric"></label>
               <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Expiry</span><input class="input" placeholder="MM / YY" value="08 / 29"></label><label class="field"><span>CVC</span><input class="input" placeholder="123" inputmode="numeric"></label></div>
-              <label class="field"><span>Cardholder name</span><input class="input" value="James Thompson"></label>
+              <label class="field"><span>Cardholder name</span><input class="input" value="${J.esc(S.lead)}"></label>
               <div class="row gap-8 small faint">${ic("shield-check")} Payments are encrypted and processed securely.</div>
             </div>
             <div id="pm-wire" class="card stack gap-8" hidden><b>Pay by wire transfer</b><p class="small muted">Confirm your booking and our team will email bank details. The aircraft is held for 24 hours while the transfer clears.</p></div>
@@ -542,7 +571,7 @@
     shell: "passenger",
     nav: "trip",
     body: () => {
-      const j = J.jets[S.jet];
+      const j = J.jet();
       return `<div class="split even" style="padding-top:24px">
         <div class="stack gap-24" style="max-width:480px;width:100%;margin:0 auto">
           <div class="stack gap-12 center"><span class="check-big">${ic("check")}</span><h1 class="h1">Booking confirmed</h1><p class="muted">Your ${j.name} is reserved. A confirmation is on its way to james@thompson.co.</p></div>
@@ -550,11 +579,11 @@
             <div class="qr">${J.qr(742)}</div>
             <div class="tear"></div>
             <div class="info">
-              <div><div class="k">Booking ref</div><div class="v mono">JG-742</div></div>
-              <div class="right"><div class="k">Lead passenger</div><div class="v">James Thompson</div></div>
+              <div><div class="k">Booking ref</div><div class="v mono">${J.esc(S.ref)}</div></div>
+              <div class="right"><div class="k">Lead passenger</div><div class="v">${J.esc(S.lead)}</div></div>
               <div><div class="k">From</div><div class="v">${J.city(S.origin)}</div></div>
               <div><div class="k">To</div><div class="v">${J.city(S.dest)}</div></div>
-              <div><div class="k">Date</div><div class="v">${when()} 2026</div></div>
+              <div><div class="k">Date</div><div class="v">${when()} ${S.date.y}</div></div>
               <div><div class="k">Departs</div><div class="v">${S.time}</div></div>
             </div>
           </div>
@@ -582,7 +611,7 @@
     </svg></div>`;
   J.screen("trip", {
     title: "Your trip",
-    sub: () => `JG-742 · ${legs()}`,
+    sub: () => `${J.esc(S.ref)} · ${legs()}`,
     doc: "Passenger: day-of-trip dashboard",
     group: "Day of travel",
     shell: "passenger",
@@ -590,20 +619,20 @@
     dark: true,
     back: "confirmed",
     action: () => `<button class="iconbtn" aria-label="Notifications" data-toast="Boarding opens at 09:40" data-icon="bell">${ic("bell")}</button>`,
-    body: () => `<div class="center stack gap-8" style="padding:12px 0 20px"><span class="label">Departing in</span><div class="display tnum" id="cd">2h 15m</div><div class="muted">Scheduled ${S.time} · ${when()}</div></div>
+    body: () => `<div class="center stack gap-8" style="padding:12px 0 20px"><span class="label">Departing in</span><div class="display tnum" id="cd">${J.countdown(S.live ? S.live.countdownSeconds : 2 * 3600 + 15 * 60)}</div><div class="muted">Scheduled ${S.time} · ${when()}</div></div>
       <div class="split">
         <div class="stack gap-16">
           <div class="glass-card stack gap-12" style="padding:16px"><div class="row between"><span class="label">Departure FBO</span><span class="pill green">On time</span></div>${fboMap()}<a class="btn light block" href="https://maps.google.com/?q=London+City+Jet+Centre" target="_blank" rel="noopener">Get directions ${ic("arrow-up-right")}</a></div>
           <div class="glass-card" style="padding:16px"><span class="label">Status</span>
-            <div class="tl mt-16"><div class="t done"><i></i><b>Baggage</b><small>Loaded</small></div><div class="t done"><i></i><b>Fueling</b><small>Complete</small></div><div class="t" id="board"><i></i><b>Boarding</b><small>Opens 09:40</small></div></div>
+            ${(() => { const r = (S.live && S.live.readiness) || { baggageLoaded: true, fuelingComplete: true, boardingOpen: false }; return `<div class="tl mt-16"><div class="t ${r.baggageLoaded ? "done" : ""}"><i></i><b>Baggage</b><small>${r.baggageLoaded ? "Loaded" : "Pending"}</small></div><div class="t ${r.fuelingComplete ? "done" : ""}"><i></i><b>Fueling</b><small>${r.fuelingComplete ? "Complete" : "Scheduled"}</small></div><div class="t ${r.boardingOpen ? "done" : ""}" id="board"><i></i><b>Boarding</b><small>${r.boardingOpen ? "Open" : "Opens 40 min before"}</small></div></div>`; })()}
           </div>
           <a class="glass-card stack gap-12" href="#/tracker" style="padding:16px;display:flex"><div class="row between"><span class="label">Live flight tracking</span>${ic("arrow-up-right")}</div><div class="map" style="height:120px">${trackerSvg(0.12, true)}</div></a>
         </div>
         <div class="stack gap-16">
           <div class="glass-card" style="padding:16px"><span class="label">Your crew</span>
-            <div class="g2 gap-12 mt-16" style="grid-template-columns:1fr 1fr"><div class="person"><span class="avatar lg">${ph("rahul", "Captain David Lee")}</span><div class="who"><b>David Lee</b><span>Captain</span></div></div><div class="person"><span class="avatar lg">${ph("rahul", "Sarah Kim")}</span><div class="who"><b>Sarah Kim</b><span>Lead flight attendant</span></div></div></div>
+            <div class="g2 gap-12 mt-16" style="grid-template-columns:1fr 1fr">${((S.live && S.live.crew) || [{ role: "Captain", name: "David Lee" }, { role: "Lead flight attendant", name: "Sarah Kim" }]).map((c) => `<div class="person"><span class="avatar lg">${ph("rahul", c.name)}</span><div class="who"><b>${J.esc(c.name)}</b><span>${J.esc(c.role)}</span></div></div>`).join("")}</div>
           </div>
-          <div class="glass-card" style="padding:16px"><span class="label">Aircraft</span><div class="row gap-12 mt-16">${ph(J.jets[S.jet].img, "", "", "width:96px;height:60px;border-radius:8px;flex:none")}<div><b>${J.jets[S.jet].name}</b><div class="small muted">Tail G-JTGO · ${S.pax} passengers</div></div></div></div>
+          <div class="glass-card" style="padding:16px"><span class="label">Aircraft</span><div class="row gap-12 mt-16">${ph(J.jet().img, "", "", "width:96px;height:60px;border-radius:8px;flex:none")}<div><b>${J.jet().name}</b><div class="small muted">Tail G-JTGO · ${S.pax} passengers</div></div></div></div>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">
             <a class="glass-card stack gap-8" href="#/ground" style="padding:16px">${ic("car-front", "gold")}<b>Ground transport</b><span class="small muted">Chauffeur on arrival</span></a>
             <a class="glass-card stack gap-8" href="#/concierge" style="padding:16px">${ic("message-circle", "gold")}<b>Concierge</b><span class="small muted">Reply in &lt; 2 min</span></a>
@@ -611,12 +640,11 @@
         </div>
       </div>`,
     init(root) {
-      let left = 2 * 3600 + 15 * 60;
+      let left = S.live ? S.live.countdownSeconds : 2 * 3600 + 15 * 60;
       const el = root.querySelector("#cd");
       J.every(1000, () => {
-        left--;
-        const h = Math.floor(left / 3600), m = Math.floor((left % 3600) / 60), s = left % 60;
-        el.textContent = `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+        left = Math.max(0, left - 1);
+        el.textContent = J.countdown(left, true);
       });
       const path = root.querySelector(".route-path"), mk = root.querySelector(".mk");
       if (path && mk) J.along(path, mk, 0.12);
@@ -645,7 +673,7 @@
   J.trackerSvg = trackerSvg;
   J.screen("tracker", {
     title: "Live flight",
-    sub: () => `JG-742 · ${legs()} · In flight`,
+    sub: () => `${J.esc(S.ref)} · ${legs()} · In flight`,
     doc: "Live flight status tracker",
     group: "Day of travel",
     shell: "passenger",
@@ -657,22 +685,24 @@
       <div class="tracker-panel stack gap-16">
         <div class="glass-card stack gap-12" style="padding:18px;border-color:rgba(184,158,103,.45)">
           <span class="label">Live progress</span>
-          <div class="h1 tnum"><span id="eta">45</span> min to arrival</div>
-          <div class="row gap-12"><div class="bar grow"><i id="bar" style="width:80%"></i></div><b class="small tnum" id="pct">80%</b></div>
+          ${S.live && S.live.phase !== "in_flight" ? `<div class="h1 tnum">${S.live.phase === "landed" ? "Landed" : `Departs in <span id="eta">${Math.round(S.live.countdownSeconds / 60)}</span> min`}</div>` : `<div class="h1 tnum"><span id="eta">${S.live ? S.live.minutesToArrival : 45}</span> min to arrival</div>`}
+          <div class="row gap-12"><div class="bar grow"><i id="bar" style="width:${S.live ? S.live.progress * 100 : 80}%"></i></div><b class="small tnum" id="pct">${Math.round((S.live ? S.live.progress : 0.8) * 100)}%</b></div>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">
-            <div class="row gap-8">${ic("mountain")}<div><div class="xs faint">Altitude</div><b class="tnum">39,000 ft</b></div></div>
-            <div class="row gap-8">${ic("gauge")}<div><div class="xs faint">Ground speed</div><b class="tnum" id="gs">480 kts</b></div></div>
+            <div class="row gap-8">${ic("mountain")}<div><div class="xs faint">Altitude</div><b class="tnum">${S.live ? S.live.altitudeFt.toLocaleString("en-US") : "39,000"} ft</b></div></div>
+            <div class="row gap-8">${ic("gauge")}<div><div class="xs faint">Ground speed</div><b class="tnum" id="gs">${S.live ? S.live.groundSpeedKts : 480} kts</b></div></div>
           </div>
         </div>
         <div class="glass-card list" style="padding:4px 18px">
           <div class="row top gap-12">${ic("plane-landing", "gold")}<div><b>Arrival</b><p class="small muted">${J.esc(S.dest)}, private aviation terminal, stand A12</p></div></div>
           <div class="row top gap-12">${ic("sun", "gold")}<div><b>Weather at destination</b><p class="small muted">Sunny, 25°C, clear skies</p></div></div>
-          <a class="row top gap-12" href="#/chauffeur">${ic("car-front", "gold")}<div class="grow"><b>Chauffeur confirmed</b><p class="small muted">Alexander will meet you planeside</p></div>${ic("chevron-right")}</a>
+          <a class="row top gap-12" href="#/chauffeur">${ic("car-front", "gold")}<div class="grow"><b>Chauffeur confirmed</b><p class="small muted">${J.esc(S.chauffeur.name)} will meet you planeside</p></div>${ic("chevron-right")}</a>
         </div>
       </div>
     </div>`,
     init(root) {
-      let t = 0.8, eta = 45;
+      // Live mode: the API supplies progress; the animation below only nudges it between polls.
+      let t = S.live ? Math.max(0.01, S.live.progress) : 0.8, eta = S.live ? S.live.minutesToArrival : 45;
+      if (S.live && S.live.phase !== "in_flight") { J.along(root.querySelector(".route-path"), root.querySelector(".mk"), Math.max(0.01, t)); return; }
       const path = root.querySelector(".route-path"), mk = root.querySelector(".mk");
       J.along(path, mk, t);
       J.every(1200, () => {
@@ -746,7 +776,7 @@
   /* =============== Chauffeur tracking =============== */
   J.screen("chauffeur", {
     title: "Your chauffeur",
-    sub: () => `${J.cars[S.car].name} · JTG-007`,
+    sub: () => `${J.cars[S.car].name} · ${J.esc(S.chauffeur.plate)}`,
     doc: "Chauffeur profile & live tracking",
     group: "Day of travel",
     shell: "passenger",
@@ -768,10 +798,10 @@
       </svg></div>
       <div class="tracker-panel stack gap-16">
         <div class="glass-card stack gap-16" style="padding:18px">
-          <div class="row gap-16"><span class="avatar xl">${ph("rahul", "Alexander")}</span><div class="stack gap-8" style="--gap:4px"><b style="font-size:22px">Alexander</b><span class="row gap-8 small">${ic("star", "gold")}<b>5.0</b><span class="muted">(128 reviews)</span></span><span class="small muted">12 years experience</span></div></div>
-          <div class="small muted">${J.cars[S.car].name} · Plate <b style="color:var(--text)">JTG-007</b></div>
+          <div class="row gap-16"><span class="avatar xl">${ph("rahul", S.chauffeur.name)}</span><div class="stack gap-8" style="--gap:4px"><b style="font-size:22px">${J.esc(S.chauffeur.name)}</b><span class="row gap-8 small">${ic("star", "gold")}<b>5.0</b><span class="muted">(128 reviews)</span></span><span class="small muted">12 years experience</span></div></div>
+          <div class="small muted">${J.cars[S.car].name} · Plate <b style="color:var(--text)">${J.esc(S.chauffeur.plate)}</b></div>
           <div class="btn light block lg" style="pointer-events:none">${ic("clock-3")} Arriving in <span id="mins">8</span> minutes</div>
-          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn ghost" href="#/concierge">${ic("mail")} Message</a><button class="btn ghost" data-toast="Calling Alexander…" data-icon="phone">${ic("phone")} Call</button></div>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn ghost" href="#/concierge">${ic("mail")} Message</a><button class="btn ghost" data-toast="Calling your chauffeur…" data-icon="phone">${ic("phone")} Call</button></div>
         </div>
         <div class="glass-card list" style="padding:4px 18px"><div class="row gap-12">${ic("map-pin", "gold")}<div><b>Planeside pickup</b><p class="small muted">Stand A12 · Meet &amp; greet</p></div></div><div class="row gap-12">${ic("flag", "gold")}<div><b>${J.esc(S.addr || "Destination to confirm")}</b><p class="small muted">ETA 12:35</p></div></div></div>
       </div>
@@ -806,10 +836,12 @@
       <form class="composer" id="composer"><button type="button" class="iconbtn" aria-label="Attach" data-toast="Attachments open in the full build" data-icon="paperclip">${ic("paperclip")}</button><input class="input" id="msg" placeholder="Type a message…" autocomplete="off"><button class="send" aria-label="Send">${ic("send-horizontal")}</button></form></div>`,
     body: () => `<div class="split"><div class="chat" id="chat">
         <div class="center xs faint">Today</div>
-        <div class="msg me">Hello Sophia, could you arrange a bottle of 1996 vintage Champagne for my flight on Thursday?<span class="ts">09:12</span></div>
-        <div class="msg them">Certainly, Mr. Thompson. A bottle of the 1996 vintage has been confirmed for your journey. Anything else?<span class="ts">09:13</span></div>
+        ${S.thread
+          ? (S.thread.length ? S.thread.map((m) => `<div class="msg ${m.sender === "user" ? "me" : "them"}">${J.esc(m.body)}<span class="ts">${new Date(m.createdAt).toTimeString().slice(0, 5)}</span></div>`).join("") : `<div class="msg them">Hello, I'm your Jettigo concierge. How can I help with your travel today?</div>`)
+          : `<div class="msg me">Hello Sophia, could you arrange a bottle of 1996 vintage Champagne for my flight on Thursday?<span class="ts">09:12</span></div>
+        <div class="msg them">Certainly, Mr. Thompson. A bottle of the 1996 vintage has been confirmed for your journey. Anything else?<span class="ts">09:13</span></div>`}
       </div>
-      <div class="desk-only"><div class="card stack gap-12 sticky"><span class="label">Your upcoming trip</span><div class="row gap-12">${ph(J.jets[S.jet].img, "", "", "width:84px;height:56px;border-radius:8px;flex:none")}<div><b>LCY → NCE</b><div class="small muted">Thu ${S.day} Oct · ${S.time}</div></div></div><div class="divider"></div><div class="kv"><span class="k">Requests</span><span class="v">2 open</span></div><div class="kv"><span class="k">Champagne 1996</span><span class="v"><span class="pill green">Confirmed</span></span></div><div class="kv"><span class="k">Chauffeur</span><span class="v"><span class="pill green">Confirmed</span></span></div><a class="btn ghost block" href="#/trip">View trip</a></div></div>
+      <div class="desk-only"><div class="card stack gap-12 sticky"><span class="label">Your upcoming trip</span><div class="row gap-12">${ph(J.jet().img, "", "", "width:84px;height:56px;border-radius:8px;flex:none")}<div><b>LCY → NCE</b><div class="small muted">Thu ${S.day} Oct · ${S.time}</div></div></div><div class="divider"></div><div class="kv"><span class="k">Requests</span><span class="v">2 open</span></div><div class="kv"><span class="k">Champagne 1996</span><span class="v"><span class="pill green">Confirmed</span></span></div><div class="kv"><span class="k">Chauffeur</span><span class="v"><span class="pill green">Confirmed</span></span></div><a class="btn ghost block" href="#/trip">View trip</a></div></div>
     </div>`,
     init(root) {
       const chat = root.querySelector("#chat");
@@ -852,7 +884,7 @@
     back: "home",
     action: () => `<button class="iconbtn" aria-label="Filters" data-toast="Filters: size, range, amenities" data-icon="sliders-horizontal">${ic("sliders-horizontal")}</button>`,
     body: () => `<div class="carousel" id="fc">${FLEET.map((k, i) => {
-        const j = J.jets[k];
+        const j = J.demoJets[k];
         return `<button class="card flush hover ${k === fj() ? "sel" : ""}" data-k="${k}" style="text-align:left">${ph(j.img, j.name, "", "aspect-ratio:16/9")}<div style="padding:14px 16px"><b style="font-size:17px">${j.name}</b><div class="small muted">${j.cls}</div></div></button>`;
       }).join("")}</div>
       <div class="split mt-16">
@@ -860,10 +892,10 @@
           <a href="#/cabin" class="banner-img fleet-preview" style="display:block;border-radius:16px;margin:0">${ph("cabin-tall", "Cabin interior", "", "aspect-ratio:16/10")}<span style="position:absolute;inset:0;display:grid;place-items:center"><span style="width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.5);font-size:13px;font-weight:600;text-align:center">${ic("rotate-3d")}<br>Rotate</span></span></a>
         </div>
         <div class="stack gap-16">
-          <div class="card stack gap-16"><div><h3 class="h2" id="fname">${J.jets[fj()].name}</h3><p class="small muted" id="fcls">${J.jets[fj()].cls}</p></div>
+          <div class="card stack gap-16"><div><h3 class="h2" id="fname">${J.demoJets[fj()].name}</h3><p class="small muted" id="fcls">${J.demoJets[fj()].cls}</p></div>
             <div class="g3 gap-8" style="grid-template-columns:repeat(3,1fr);text-align:center">
-              <div class="stack gap-8" style="align-items:center">${ic("users")}<div class="xs faint">Passengers</div><b id="fp">${J.jets[fj()].pax}</b></div>
-              <div class="stack gap-8" style="align-items:center;border-left:1px solid var(--line);border-right:1px solid var(--line)">${ic("globe-2")}<div class="xs faint">Range</div><b id="fr">${J.jets[fj()].range}</b></div>
+              <div class="stack gap-8" style="align-items:center">${ic("users")}<div class="xs faint">Passengers</div><b id="fp">${J.demoJets[fj()].pax}</b></div>
+              <div class="stack gap-8" style="align-items:center;border-left:1px solid var(--line);border-right:1px solid var(--line)">${ic("globe-2")}<div class="xs faint">Range</div><b id="fr">${J.demoJets[fj()].range}</b></div>
               <div class="stack gap-8" style="align-items:center">${ic("ruler")}<div class="xs faint">Cabin height</div><b id="fh">${HEIGHT[fj()]}</b></div>
             </div>
             <p class="small muted">Explore the cabin in 360°, then request a quote for your dates. Every aircraft is operated by a verified, insured partner.</p>
@@ -877,7 +909,7 @@
       if (selected) root.querySelector("#fc").scrollLeft = selected.offsetLeft - root.querySelector("#fc").offsetLeft;
       root.querySelectorAll("[data-k]").forEach((b) =>
         b.addEventListener("click", () => {
-          const j = J.jets[b.dataset.k];
+          const j = J.demoJets[b.dataset.k];
           root.querySelectorAll("[data-k]").forEach((x) => x.classList.toggle("sel", x === b));
           root.querySelector("#fname").textContent = j.name;
           root.querySelector("#fcls").textContent = j.cls;
@@ -898,7 +930,7 @@
   ];
   J.screen("cabin", {
     title: "Cabin tour",
-    sub: () => J.jets[S.jet].name,
+    sub: () => J.jet().name,
     doc: "Interior: 360° cabin tour",
     group: "Website",
     shell: "passenger",
@@ -915,7 +947,7 @@
         <div class="scenes">${["Lounge|cabin-tall", "Forward cabin|cabin-hero", "Aft suite|cabin-amen"].map((s, i) => { const [l, img] = s.split("|"); return `<button class="${i === 0 ? "on" : ""}" data-s="${i}">${ph(img, "")}${l}</button>`; }).join("")}</div>
       </div></div>
       <div class="stack gap-16">
-        <div class="glass-card stack gap-12" style="padding:18px"><span class="label">${J.jets[S.jet].name}</span><h2 class="h1">A cabin built for living</h2><p class="muted">Tap the hotspots to explore cabin features. Switch scenes to walk through the aircraft.</p>
+        <div class="glass-card stack gap-12" style="padding:18px"><span class="label">${J.jet().name}</span><h2 class="h1">A cabin built for living</h2><p class="muted">Tap the hotspots to explore cabin features. Switch scenes to walk through the aircraft.</p>
           <div class="list">${HOTS.map((h) => `<div class="row top gap-12">${ic("sparkles", "gold")}<div><b>${h.t}</b><p class="small muted">${h.d}</p></div></div>`).join("")}</div></div>
         <a class="btn block lg desk-only" href="#/route">${ic("plane-takeoff")} Book this jet</a>
       </div>
@@ -1002,7 +1034,7 @@
       <div class="stack gap-16">
         <h1 class="display" style="font-size:clamp(34px,5vw,52px)">Share the sky</h1>
         <p class="body-lg muted">Refer a friend and you both receive $1,000 in flight credit on their first booking.</p>
-        <div class="card row between referral-code" style="background:var(--surface-2);padding:14px"><b class="mono">JETTIGO-1000-VIP</b><button class="btn" data-act="copy">${ic("copy")} Copy</button></div>
+        <div class="card row between referral-code" style="background:var(--surface-2);padding:14px"><b class="mono">${J.esc((S.referral && S.referral.code) || "JETTIGO-1000-VIP")}</b><button class="btn" data-act="copy">${ic("copy")} Copy</button></div>
         <button class="btn block lg" data-act="share">${ic("share")} Share via…</button>
         <div class="section"><h2 class="h2">How it works</h2>
           <div class="g3 gap-12" style="grid-template-columns:repeat(3,1fr);text-align:center">
@@ -1011,12 +1043,12 @@
             <div class="stack gap-8" style="align-items:center"><span class="ico-tile" style="width:64px;height:64px;border-radius:16px">${ic("hand-coins")}</span><b class="small">3. Both get credits</b></div>
           </div>
         </div>
-        <div class="card row between"><div><div class="xs faint">Friends joined</div><b style="font-size:22px">2</b></div><div class="right"><div class="xs faint">Credits earned</div><b style="font-size:22px" class="gold">$2,000</b></div></div>
+        <div class="card row between"><div><div class="xs faint">Friends joined</div><b style="font-size:22px">${S.referral ? S.referral.friendsJoined : 2}</b></div><div class="right"><div class="xs faint">Credits earned</div><b style="font-size:22px" class="gold">${money(S.referral ? S.referral.creditsEarnedCents / 100 : 2000)}</b></div></div>
       </div>
     </div>`,
     init(root) {
       root.querySelector('[data-act="copy"]').addEventListener("click", () => {
-        navigator.clipboard?.writeText("JETTIGO-1000-VIP").catch(() => {});
+        navigator.clipboard?.writeText((S.referral && S.referral.code) || "JETTIGO-1000-VIP").catch(() => {});
         J.toast("Referral code copied", "copy");
       });
       root.querySelector('[data-act="share"]').addEventListener("click", () => {

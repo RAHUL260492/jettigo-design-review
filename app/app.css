@@ -784,3 +784,14 @@ html.wire .desknav nav a.on { color: #111 !important; background: #eee !importan
   .amen-foot { grid-column: 2; margin-top: 0; }
   .referral-banner .ph { aspect-ratio: 16 / 9 !important; }
 }
+
+/* ---------- Live mode ---------- */
+body.is-loading::after { content: ""; position: fixed; top: 0; left: 0; height: 3px; width: 40%; z-index: 100; background: var(--gold); animation: loadbar 1s ease-in-out infinite; }
+@keyframes loadbar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+.live-pill { position: fixed; left: 12px; bottom: calc(var(--tabbar-h) + 12px); z-index: 85; display: inline-flex; align-items: center; gap: 8px; max-width: calc(100% - 24px); padding: 7px 12px; border-radius: 999px; background: rgba(11,22,33,0.92); color: #fff; font-size: 12px; font-weight: 500; box-shadow: var(--shadow-lg); }
+.live-pill i { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.25); flex: none; }
+.live-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.live-pill button { color: var(--gold-200); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; flex: none; }
+@media (max-width: 1099.98px) { .live-pill { display: none; } }
+@media (min-width: 1100px) { .live-pill { bottom: 16px; } }
+.live-hint { font-size: 12px; padding: 8px 12px; border-radius: 8px; background: rgba(184,158,103,0.16); color: var(--gold-200); }

@@ -2,15 +2,60 @@
 (function () {
   const { ic, ph, money, brand } = J;
 
+  /* Demo data. In live mode (app/live.js) the same shapes are filled from the API. */
+  const D = (J.data = {
+    corp: {
+      name: "Thompson Holdings",
+      balance: 1450000,
+      members: 24,
+      kpis: [
+        { label: "Spent (last 6 months)", value: "$520k", delta: "▲ 12% vs last half" },
+        { label: "Flights this quarter", value: "18", delta: "▲ 4" },
+        { label: "Avg. cost per flight", value: "$28.9k", delta: "Stable", flat: true },
+        { label: "Carbon offset", value: "100%", delta: "All flights" },
+      ],
+      chart: { values: [42, 68, 96, 74, 118, 122], labels: ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], caption: "Last 6 months, $k", total: "$520k" },
+      activity: [
+        { name: "Mark Davis", status: "Upcoming", date: "12 Nov", route: "NYC → LAX", aircraft: "Learjet 75" },
+        { name: "Sarah Lee", status: "Completed", date: "05 Oct", route: "LON → CDG", aircraft: "Global 6000" },
+        { name: "John Kim", status: "Upcoming", date: "18 Nov", route: "DXB → HKG", aircraft: "Challenger 350" },
+      ],
+      team: [
+        { name: "Sarah Lee", role: "Administrator" },
+        { name: "John Kim", role: "Traveler" },
+        { name: "Mark Davis", role: "Traveler" },
+      ],
+    },
+    invoices: [
+      { date: "26 Oct 2026", number: "INV-8829", amount: 24500, status: "Paid" },
+      { date: "15 Oct 2026", number: "INV-8825", amount: 18750, status: "Pending" },
+      { date: "10 Oct 2026", number: "INV-8821", amount: 31200, status: "Processing" },
+    ],
+    spend: { values: [18400, 24750, 31300], labels: ["Aug", "Sep", "Oct"] },
+    op: {
+      review: null,
+      req: { from: "LCY", to: "NCE", date: "Thu 29 Oct 2026", time: "10:00", pax: 4, bags: "4 bags, 80 kg", member: "Gold member", model: "Citation Latitude", tail: "G-RVRA", range: "2,700 nm", img: "jet-latitude", standard: 12500, seconds: 14 * 60 + 22 },
+      queue: [
+        { route: "FAB → GVA", meta: "Fri 30 Oct · 2 pax", left: "42:10" },
+        { route: "BQH → LBG", meta: "Sat 31 Oct · 6 pax", left: "1:12:44" },
+        { route: "LCY → PMI", meta: "Mon 2 Nov · 3 pax", left: "2:05:00" },
+      ],
+      stats: { win: "38%", resp: "6m" },
+    },
+    docs: [
+      { title: "Q3 VAT Certificate.pdf", meta: "Today, 10:30 · 1.2 MB" },
+      { title: "Flight Manifest – G-JTGO.pdf", meta: "Yesterday · 850 KB" },
+      { title: "US Entry Permit.pdf", meta: "25 Oct · 2.5 MB" },
+      { title: "2025 Annual Tax Statement.pdf", meta: "25 Oct · 4.1 MB" },
+    ],
+  });
+  const STATUS = { Paid: ["green", "circle-check"], Pending: ["amber", "clock-3"], Processing: ["blue", "refresh-cw"] };
+  const esc = J.esc;
+
   /* =============== Corporate dashboard =============== */
-  const TEAM = [
-    { n: "Sarah Lee", r: "Administrator", av: "rahul" },
-    { n: "John Kim", r: "Traveler", av: "rahul" },
-    { n: "Mark Davis", r: "Traveler", av: "rahul" },
-  ];
   J.screen("corp", {
     title: "Jettigo Corporate",
-    sub: "Thompson Holdings",
+    sub: () => esc(D.corp.name),
     doc: "Corporate management dashboard",
     group: "Corporate",
     shell: "corporate",
@@ -20,33 +65,30 @@
       <div class="stack gap-24">
         <div class="card navy pad-lg stack gap-8" style="border-radius:16px;background:linear-gradient(135deg,#202a36,#0b1621)">
           <div class="row between"><span class="label">Flight credits &amp; team</span>${ic("bar-chart-3", "gold")}</div>
-          <div class="row wrap gap-8" style="align-items:baseline"><span class="muted">Total balance</span><b style="font-size:34px;letter-spacing:-0.02em" class="tnum">$1,450,000</b></div>
-          <div class="small muted">Active team members: <b style="color:#fff">24</b> across all roles</div>
+          <div class="row wrap gap-8" style="align-items:baseline"><span class="muted">Total balance</span><b style="font-size:34px;letter-spacing:-0.02em" class="tnum">${money(D.corp.balance)}</b></div>
+          <div class="small muted">Active team members: <b style="color:#fff">${D.corp.members}</b> across all roles</div>
           <div class="row gap-8 mt-8"><a class="btn gold sm" href="#/route">${ic("plus")} Book for team</a><button class="btn glass sm" data-toast="Top-up request sent to finance" data-icon="wallet">Top up credits</button></div>
         </div>
         <div class="g4 gap-12">
-          <div class="card kpi"><div class="xs faint">Spent (Apr–Sep)</div><div class="n">$520k</div><div class="d">▲ 12% vs last half</div></div>
-          <div class="card kpi"><div class="xs faint">Flights this quarter</div><div class="n">18</div><div class="d">▲ 4</div></div>
-          <div class="card kpi"><div class="xs faint">Avg. cost per flight</div><div class="n">$28.9k</div><div class="d" style="color:var(--text-3)">Stable</div></div>
-          <div class="card kpi"><div class="xs faint">Carbon offset</div><div class="n">100%</div><div class="d">All flights</div></div>
+          ${D.corp.kpis.map((k) => `<div class="card kpi"><div class="xs faint">${esc(k.label)}</div><div class="n">${esc(k.value)}</div><div class="d"${k.flat ? ' style="color:var(--text-3)"' : ""}>${esc(k.delta)}</div></div>`).join("")}
         </div>
-        <div class="card pad-lg"><div class="row between"><div><h2 class="h2">Spending analytics</h2><div class="small faint">Apr – Sep 2026, $k</div></div><div class="right"><div class="xs faint">Total spent</div><b>$520k</b></div></div>
-          <div class="mt-16">${J.chart([42, 68, 96, 74, 118, 122], ["Apr", "May", "Jun", "Jul", "Aug", "Sep"], { prefix: "" })}</div>
+        <div class="card pad-lg"><div class="row between"><div><h2 class="h2">Spending analytics</h2><div class="small faint">${esc(D.corp.chart.caption)}</div></div><div class="right"><div class="xs faint">Total spent</div><b>${esc(D.corp.chart.total)}</b></div></div>
+          <div class="mt-16">${D.corp.chart.values.length > 1 ? J.chart(D.corp.chart.values, D.corp.chart.labels, { prefix: "" }) : `<p class="small muted">Spending appears here after your first company booking.</p>`}</div>
         </div>
       </div>
       <div class="stack gap-24">
         <div class="card pad-lg"><div class="row between"><h2 class="h2">Travel activity</h2><a class="small link" href="#/invoices">All trips</a></div>
           <div class="list mt-8">
-            ${[["rahul", "Mark Davis", "Upcoming", "12 Nov", "NYC → LAX", "Learjet 75"], ["rahul", "Sarah Lee", "Completed", "05 Oct", "LON → CDG", "Global 6000"], ["rahul", "John Kim", "Upcoming", "18 Nov", "DXB → HKG", "Challenger 350"]]
-              .map((r) => `<div class="person"><span class="avatar">${ph(r[0], r[1])}</span><div class="who"><span class="pill ${r[2] === "Upcoming" ? "blue" : "green"}" style="height:20px;font-size:11px">${r[2]}</span><b>${r[1]}</b></div><div class="right"><b class="small">${r[4]}</b><div class="xs faint">${r[3]} · ${r[5]}</div></div></div>`).join("")}
+            ${D.corp.activity.length ? D.corp.activity
+              .map((r) => `<div class="person"><span class="avatar">${ph("rahul", r.name)}</span><div class="who"><span class="pill ${r.status === "Completed" ? "green" : "blue"}" style="height:20px;font-size:11px">${esc(r.status)}</span><b>${esc(r.name)}</b></div><div class="right"><b class="small">${esc(r.route)}</b><div class="xs faint">${esc(r.date)} · ${esc(r.aircraft)}</div></div></div>`).join("") : `<p class="small muted">No company trips yet.</p>`}
           </div>
         </div>
-        <div class="card pad-lg"><div class="row between"><h2 class="h2">Team management</h2><span class="small faint">24 members</span></div>
+        <div class="card pad-lg"><div class="row between"><h2 class="h2">Team management</h2><span class="small faint">${D.corp.members} members</span></div>
           <div class="list mt-8" id="team">
-            ${TEAM.map((t) => `<div class="person"><span class="avatar">${ph(t.av, t.n)}</span><div class="who"><b>${t.n}</b></div><span class="pill">${t.r}</span><button class="iconbtn" aria-label="Manage ${t.n}" data-toast="Permissions for ${t.n}" data-icon="user-cog">${ic("square-pen")}</button></div>`).join("")}
+            ${D.corp.team.map((t) => `<div class="person"><span class="avatar">${ph("rahul", t.name)}</span><div class="who"><b>${esc(t.name)}</b></div><span class="pill">${esc(t.role)}</span><button class="iconbtn" aria-label="Manage ${esc(t.name)}" data-toast="Permissions for ${esc(t.name)}" data-icon="user-cog">${ic("square-pen")}</button></div>`).join("")}
           </div>
           <button class="btn block mt-16" data-act="add">${ic("user-plus")} Add new traveler</button>
-          <form id="addf" class="stack gap-12 mt-16" hidden><input class="input" id="nn" placeholder="Full name" required><div class="seg block sm"><button type="button" class="on">Traveler</button><button type="button">Booker</button><button type="button">Admin</button></div><button class="btn ghost block">Send invitation</button></form>
+          <form id="addf" class="stack gap-12 mt-16" hidden><input class="input" id="nn" placeholder="Full name" aria-label="Full name" required><input class="input" id="ne" type="email" placeholder="Work email" aria-label="Work email" required><div class="seg block sm" id="nr"><button type="button" class="on" data-v="traveler">Traveler</button><button type="button" data-v="booker">Booker</button><button type="button" data-v="admin">Admin</button></div><button class="btn ghost block">Send invitation</button></form>
         </div>
       </div>
     </div>`,
@@ -57,6 +99,7 @@
       });
       root.querySelector("#addf").addEventListener("submit", (e) => {
         e.preventDefault();
+        if (J.live && J.live.on) return; // live.js handles the API call
         const n = J.esc(root.querySelector("#nn").value);
         root.querySelector("#team").insertAdjacentHTML("beforeend", `<div class="person"><span class="avatar" style="display:grid;place-items:center;background:var(--gold-100);color:var(--gold-700);font-weight:600">${n.charAt(0)}</span><div class="who"><b>${n}</b><span>Invitation sent</span></div><span class="pill amber">Pending</span></div>`);
         e.target.reset();
@@ -67,13 +110,6 @@
   });
 
   /* =============== Invoices & reports =============== */
-  const INV = [
-    ["26 Oct 2026", "INV-8829", 24500, "Paid", "green", "circle-check"],
-    ["15 Oct 2026", "INV-8825", 18750, "Pending", "amber", "clock-3"],
-    ["10 Oct 2026", "INV-8821", 31200, "Processing", "blue", "refresh-cw"],
-  ];
-  const SPEND = [18400, 24750, 31300];
-  const spendTotal = SPEND.reduce((sum, value) => sum + value, 0);
   J.screen("invoices", {
     title: "Financial overview",
     doc: "Corporate invoicing & reports",
@@ -84,17 +120,17 @@
     body: () => `<div class="seg block" id="tabs" style="max-width:420px"><button class="on" data-v="inv">Invoices</button><button data-v="rep">Reports</button></div>
       <div class="split mt-24">
         <div class="stack gap-12" id="p-inv">
-          ${INV.map((r) => `<div class="card row between"><div class="stack gap-8"><div class="xs faint">${r[0]} · ${r[1]}</div><div class="row gap-12"><b style="font-size:22px" class="tnum">${money(r[2])}.00</b><span class="pill ${r[4]}">${ic(r[5])} ${r[3]}</span></div></div><button class="sq-btn ghost" aria-label="Download ${r[1]}" data-toast="${r[1]}.pdf downloaded" data-icon="download">${ic("file-down")}</button></div>`).join("")}
-          <div class="card pad-lg"><h2 class="h2">Quarterly spending</h2><div class="mt-16">${J.chart(SPEND.map((value) => value / 1000), ["Aug", "Sep", "Oct"], { prefix: "" })}</div><div class="row between small mt-8"><span class="muted">Total <b style="color:var(--text)">${money(spendTotal)}.00</b></span><span class="muted">Avg. monthly <b style="color:var(--text)">${(spendTotal / SPEND.length).toLocaleString("en-US", { style: "currency", currency: "USD" })}</b></span></div></div>
+          ${D.invoices.length ? D.invoices.map((r) => { const [cls, icon] = STATUS[r.status] || STATUS.Pending; return `<div class="card row between"><div class="stack gap-8"><div class="xs faint">${esc(r.date)} · ${esc(r.number)}</div><div class="row gap-12"><b style="font-size:22px" class="tnum">${r.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}</b><span class="pill ${cls}">${ic(icon)} ${esc(r.status)}</span></div></div><button class="sq-btn ghost" aria-label="Download ${esc(r.number)}" data-toast="${esc(r.number)}.pdf downloaded" data-icon="download">${ic("file-down")}</button></div>`; }).join("") : `<div class="card"><p class="small muted">No invoices yet. They appear here after company bookings.</p></div>`}
+          ${(() => { const v = D.spend.values, total = v.reduce((a, b) => a + b, 0); return v.length > 1 ? `<div class="card pad-lg"><h2 class="h2">Spending trend</h2><div class="mt-16">${J.chart(v.map((x) => x / 1000), D.spend.labels, { prefix: "" })}</div><div class="row between small mt-8"><span class="muted">Total <b style="color:var(--text)">${total.toLocaleString("en-US", { style: "currency", currency: "USD" })}</b></span><span class="muted">Avg. monthly <b style="color:var(--text)">${(total / v.length).toLocaleString("en-US", { style: "currency", currency: "USD" })}</b></span></div></div>` : ""; })()}
         </div>
         <div class="stack gap-12" id="p-rep" hidden>
           ${[["Q3 2026 travel summary", "Trips, spend and CO₂ by department"], ["Traveler activity", "Per-person flights and policy exceptions"], ["VAT reclaim pack", "Invoices grouped by jurisdiction"]].map((r) => `<div class="card row between"><div class="row gap-12"><span class="folder">${ic("file-bar-chart")}</span><div><b>${r[0]}</b><div class="small muted">${r[1]}</div></div></div><button class="sq-btn ghost" aria-label="Download" data-toast="Report exported" data-icon="download">${ic("download")}</button></div>`).join("")}
         </div>
         <div class="card pad-lg stack gap-12 sticky"><h2 class="h2">Generate custom report</h2>
-          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Start date</span><input class="input" type="date" value="2026-07-01"></label><label class="field"><span>End date</span><input class="input" type="date" value="2026-09-30"></label></div>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Start date</span><input class="input" id="rfrom" type="date" value="2026-07-01"></label><label class="field"><span>End date</span><input class="input" id="rto" type="date" value="2026-09-30"></label></div>
           <label class="field"><span>Group by</span><select class="input"><option>Department</option><option>Traveler</option><option>Aircraft category</option></select></label>
           <span class="small muted">Export format</span>
-          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><button class="btn" data-toast="Report_Q3_2026.pdf exported" data-icon="file-down">Export PDF</button><button class="btn ghost" data-toast="Report_Q3_2026.csv exported" data-icon="sheet">Export CSV</button></div>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><button class="btn" data-act="pdf" data-toast="Report_Q3_2026.pdf exported" data-icon="file-down">Export PDF</button><button class="btn ghost" data-act="csv" data-toast="Report_Q3_2026.csv exported" data-icon="sheet">Export CSV</button></div>
         </div>
       </div>`,
     init(root) {
@@ -106,12 +142,6 @@
   });
 
   /* =============== Tax & compliance =============== */
-  const DOCS = [
-    ["Q3 VAT Certificate.pdf", "Today, 10:30 · 1.2 MB"],
-    ["Flight Manifest – G-JTGO.pdf", "Yesterday · 850 KB"],
-    ["US Entry Permit.pdf", "25 Oct · 2.5 MB"],
-    ["2025 Annual Tax Statement.pdf", "25 Oct · 4.1 MB"],
-  ];
   J.screen("documents", {
     title: "Tax &amp; compliance",
     doc: "Tax & compliance documentation",
@@ -123,7 +153,7 @@
       <div class="split mt-24">
         <div><h2 class="h2">Recent documents</h2>
           <div class="list card mt-12" style="padding:0 16px" id="docs">
-            ${DOCS.map((d) => `<div class="row between doc"><div class="row gap-12" style="min-width:0">${ic("file-text", "faint")}<div style="min-width:0"><b class="small" style="font-size:15px">${d[0]}</b><div class="xs faint">${d[1]}</div></div></div><div class="row gap-8"><button class="sq-btn" aria-label="Download" data-toast="${d[0]} downloaded" data-icon="download">${ic("download")}</button><button class="sq-btn" aria-label="Share" data-toast="Secure link copied" data-icon="link">${ic("share")}</button></div></div>`).join("")}
+            ${D.docs.map((d) => `<div class="row between doc"><div class="row gap-12" style="min-width:0">${ic("file-text", "faint")}<div style="min-width:0"><b class="small" style="font-size:15px">${esc(d.title)}</b><div class="xs faint">${esc(d.meta)}</div></div></div><div class="row gap-8"><button class="sq-btn" aria-label="Download ${esc(d.title)}" ${d.kind === "manifest" ? `data-manifest="${esc(d.id)}"` : `data-toast="${esc(d.title)} downloaded" data-icon="download"`}>${ic("download")}</button><button class="sq-btn" aria-label="Share" data-toast="Secure link copied" data-icon="link">${ic("share")}</button></div></div>`).join("")}
             <p class="small muted" id="none" hidden>No documents match your search.</p>
           </div>
         </div>
@@ -195,9 +225,10 @@
     body: () => `${vprog(1)}
       <div class="split mt-24">
         <div class="card pad-lg stack gap-16">
-          <label class="field"><span>Company name</span><input class="input" placeholder="Enter company name" value="Riviera Air Charter Ltd"></label>
-          <div class="g2 gap-12"><label class="field"><span>Air operator certificate (AOC) no.</span><input class="input" placeholder="Enter license number"></label><label class="field"><span>Country of registration</span><select class="input"><option>United Kingdom</option><option>France</option><option>India</option><option>United Arab Emirates</option></select></label></div>
-          <label class="field"><span>Years in operation</span><input class="input" type="number" placeholder="e.g. 10"></label>
+          <label class="field"><span>Company name</span><input class="input" id="pc" placeholder="Enter company name" value="Riviera Air Charter Ltd"></label>
+          <div class="g2 gap-12"><label class="field"><span>Contact name</span><input class="input" id="pn" placeholder="Your full name" autocomplete="name"></label><label class="field"><span>Work email</span><input class="input" id="pe" type="email" placeholder="ops@company.com" autocomplete="email"></label></div>
+          <div class="g2 gap-12"><label class="field"><span>Air operator certificate (AOC) no.</span><input class="input" id="pa" placeholder="Enter license number"></label><label class="field"><span>Country of registration</span><select class="input" id="pk"><option>United Kingdom</option><option>France</option><option>India</option><option>United Arab Emirates</option></select></label></div>
+          <label class="field"><span>Years in operation</span><input class="input" id="py" type="number" min="0" max="100" placeholder="e.g. 10"></label>
         </div>
         <div class="stack gap-12"><h2 class="h2">Document upload</h2>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">${drop("aoc", "Operating certificate", "file-text")}${drop("ins", "Insurance coverage", "upload")}</div>
@@ -234,9 +265,9 @@
         <div class="stack gap-12"><div class="row between"><h2 class="h2">For aircraft operators</h2><div class="seg sm" id="kind"><button class="on" data-v="aircraft">Aircraft</button><button data-v="helicopter">Helicopter</button></div></div>
           <div class="card pad-lg stack gap-16" id="aircraft">
             <b style="font-size:18px">Add your first aircraft</b>
-            <label class="field"><span>Model name</span><input class="input" placeholder="e.g. Gulfstream G650"></label>
-            <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Tail number</span><input class="input" placeholder="e.g. G-RVRA"></label><label class="field"><span>Seating capacity</span><input class="input" type="number" placeholder="e.g. 12"></label></div>
-            <label class="field"><span>Base hourly rate</span><div class="affix"><b>$</b><input class="input" inputmode="numeric" placeholder="5,000"></div></label>
+            <label class="field"><span>Model name</span><input class="input" id="am" placeholder="e.g. Gulfstream G650"></label>
+            <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Tail number</span><input class="input" id="at" placeholder="e.g. G-RVRA"></label><label class="field"><span>Seating capacity</span><input class="input" id="as" type="number" placeholder="e.g. 12"></label></div>
+            <label class="field"><span>Base hourly rate</span><div class="affix"><b>$</b><input class="input" id="ar" inputmode="numeric" placeholder="5,000"></div></label>
             <div class="field"><span>Cabin dimensions (ft)</span><div class="g3 gap-8" style="grid-template-columns:repeat(3,1fr)"><input class="input" placeholder="Length"><input class="input" placeholder="Width"><input class="input" placeholder="Height"></div></div>
             <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><label class="field"><span>Baggage capacity</span><input class="input" placeholder="Standard bags"></label><div class="field"><span>Max total weight</span><div class="row gap-8"><input class="input" placeholder="0"><div class="seg sm dark-on"><button class="on">KG</button><button>LBS</button></div></div></div></div>
             <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">${drop("ext", "Exterior photo", "image-up")}${drop("int", "Interior photo", "image-up")}</div>
@@ -337,33 +368,40 @@
     nav: "quotes",
     back: "op-login",
     action: () => `<button class="iconbtn" aria-label="Notifications" data-toast="2 new requests in the last hour" data-icon="bell">${ic("bell")}</button>`,
-    body: () => `<div class="split">
-      <div class="stack gap-16" id="req">
-        <div class="row between wrap"><h2 class="h2" style="margin:0">New booking request</h2><span class="timer">${ic("timer")} <span id="tm">14:22</span> remaining</span></div>
+    body: () => {
+      const op = D.op, r = op.req;
+      const main = op.review
+        ? `<div class="card stack gap-12 center" style="padding:32px"><span class="check-big" style="background:var(--slate-100);color:var(--slate-600)">${ic("hourglass")}</span><b style="font-size:18px">Application under review</b><p class="small muted">${esc(op.review)}</p></div>`
+        : !r
+          ? `<div class="card stack gap-12 center" style="padding:32px"><span class="check-big">${ic("inbox")}</span><b style="font-size:18px">No open requests</b><p class="small muted">New quote requests for your aircraft appear here.</p></div>`
+          : `<div class="row between wrap"><h2 class="h2" style="margin:0">New booking request</h2><span class="timer">${ic("timer")} <span id="tm">${Math.floor(r.seconds / 60)}:${String(r.seconds % 60).padStart(2, "0")}</span> remaining</span></div>
         <div class="card stack gap-12">
-          <div class="row between wrap"><div class="row gap-12"><b style="font-size:20px">LCY</b>${ic("arrow-right", "faint")}<b style="font-size:20px">NCE</b></div><div class="row gap-12 small"><span>Thu 29 Oct 2026</span><span class="row gap-8">${ic("clock-3")} 10:00</span></div></div>
+          <div class="row between wrap"><div class="row gap-12"><b style="font-size:20px">${esc(r.from)}</b>${ic("arrow-right", "faint")}<b style="font-size:20px">${esc(r.to)}</b></div><div class="row gap-12 small"><span>${esc(r.date)}</span><span class="row gap-8">${ic("clock-3")} ${esc(r.time)}</span></div></div>
           <div class="divider" style="margin:0"></div>
-          <div class="row gap-24 wrap small"><span class="row gap-8">${ic("user")} 4 passengers</span><span class="row gap-8">${ic("luggage")} 4 bags, 80 kg</span><span class="row gap-8">${ic("crown")} Gold member</span></div>
+          <div class="row gap-24 wrap small"><span class="row gap-8">${ic("user")} ${r.pax} passengers</span><span class="row gap-8">${ic("luggage")} ${esc(r.bags)}</span>${r.member ? `<span class="row gap-8">${ic("crown")} ${esc(r.member)}</span>` : ""}</div>
         </div>
         <div class="stack gap-8"><h3 class="h3">Requested aircraft</h3>
-          <div class="card row gap-16">${ph("jet-latitude", "Citation Latitude", "", "width:120px;height:72px;border-radius:8px;flex:none")}<div><b style="font-size:17px">Citation Latitude</b><div class="small muted">Tail G-RVRA · Range 2,700 nm</div><span class="pill green mt-8">${ic("check")} Available</span></div></div>
+          <div class="card row gap-16">${ph(r.img, r.model, "", "width:120px;height:72px;border-radius:8px;flex:none")}<div><b style="font-size:17px">${esc(r.model)}</b><div class="small muted">Tail ${esc(r.tail)} · Range ${esc(r.range)}</div><span class="pill green mt-8">${ic("check")} Available</span></div></div>
         </div>
         <div class="stack gap-8" id="actions"><h3 class="h3">Your response</h3>
-          <button class="btn block lg" data-act="accept">Accept at standard rate $12,500</button>
-          <form class="op-action" id="counter"><b>Counter offer</b><div class="row gap-8"><div class="affix"><b>$</b><input class="input" id="cv" inputmode="numeric" placeholder="Enter price"></div><button class="sq-btn" aria-label="Send counter offer">${ic("send-horizontal")}</button></div></form>
+          <button class="btn block lg" data-act="accept">Accept at standard rate ${money(r.standard)}</button>
+          <form class="op-action" id="counter"><b>Counter offer</b><div class="row gap-8"><div class="affix"><b>$</b><input class="input" id="cv" inputmode="numeric" placeholder="Enter price" aria-label="Counter offer price"></div><button class="sq-btn" aria-label="Send counter offer">${ic("send-horizontal")}</button></div></form>
           <div class="op-action"><b>Decline request</b><select id="decl" aria-label="Decline reason"><option value="">Select reason</option><option>Aircraft unavailable</option><option>Crew duty limits</option><option>Airport restrictions</option></select></div>
         </div>
-        <div class="card stack gap-8 center" id="done" hidden style="padding:28px"><span class="check-big">${ic("check")}</span><b style="font-size:18px" id="done-t">Quote sent</b><p class="small muted" id="done-d">The traveler has been notified.</p></div>
-      </div>
+        <div class="card stack gap-8 center" id="done" hidden style="padding:28px"><span class="check-big">${ic("check")}</span><b style="font-size:18px" id="done-t">Quote sent</b><p class="small muted" id="done-d">The traveler has been notified.</p></div>`;
+      return `<div class="split">
+      <div class="stack gap-16" id="req">${main}</div>
       <div class="stack gap-16">
-        <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><div class="card kpi"><div class="xs faint">Win rate (30d)</div><div class="n">38%</div></div><div class="card kpi"><div class="xs faint">Avg. response</div><div class="n">6m</div></div></div>
-        <div class="card"><div class="row between"><b>Queue</b><span class="pill">3</span></div><div class="list mt-8">
-          ${[["FAB → GVA", "Fri 30 Oct · 2 pax", "42:10"], ["BQH → LBG", "Sat 31 Oct · 6 pax", "1:12:44"], ["LCY → PMI", "Mon 2 Nov · 3 pax", "2:05:00"]].map((q) => `<button class="row between" style="width:100%;text-align:left" data-toast="Opening ${q[0]}" data-icon="inbox"><div><b>${q[0]}</b><div class="xs faint">${q[1]}</div></div><span class="small faint tnum">${q[2]}</span></button>`).join("")}
+        <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><div class="card kpi"><div class="xs faint">Win rate (30d)</div><div class="n">${esc(op.stats.win)}</div></div><div class="card kpi"><div class="xs faint">Avg. response</div><div class="n">${esc(op.stats.resp)}</div></div></div>
+        <div class="card"><div class="row between"><b>Queue</b><span class="pill">${op.queue.length}</span></div><div class="list mt-8">
+          ${op.queue.length ? op.queue.map((q) => `<button class="row between" style="width:100%;text-align:left" data-toast="Opening ${esc(q.route)}" data-icon="inbox"><div><b>${esc(q.route)}</b><div class="xs faint">${esc(q.meta)}</div></div><span class="small faint tnum">${esc(q.left)}</span></button>`).join("") : `<p class="small muted">Nothing else waiting.</p>`}
         </div></div>
       </div>
-    </div>`,
+    </div>`;
+    },
     init(root) {
-      let left = 14 * 60 + 22;
+      if (!D.op.req || D.op.review) return;
+      let left = D.op.req.seconds;
       J.every(1000, () => {
         left = Math.max(0, left - 1);
         root.querySelector("#tm").textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
@@ -374,7 +412,8 @@
         root.querySelector("#done-t").textContent = t;
         root.querySelector("#done-d").textContent = d;
       };
-      root.querySelector('[data-act="accept"]').addEventListener("click", () => finish("Accepted at $12,500", "The traveler has been notified and the aircraft is held."));
+      J.finishQuote = finish;
+      root.querySelector('[data-act="accept"]').addEventListener("click", () => finish(`Accepted at ${money(D.op.req.standard)}`, "The traveler has been notified and the aircraft is held."));
       root.querySelector("#counter").addEventListener("submit", (e) => {
         e.preventDefault();
         const v = root.querySelector("#cv").value.replace(/[^\d]/g, "");

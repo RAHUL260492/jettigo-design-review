@@ -1,0 +1,35 @@
+# Render Blueprint: Jettigo API + PostgreSQL. Deploy via
+# https://render.com/deploy?repo=https://github.com/RAHUL260492/jettigo-design-review
+databases:
+  - name: jettigo-db
+    plan: free
+    databaseName: jettigo
+    user: jettigo
+
+services:
+  - type: web
+    name: jettigo-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jettigo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PII_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://rahul260492.github.io
+      # No email provider yet: return one-time codes in the API response for demos.
+      - key: DEMO_OTP
+        value: "true"
+      - key: SEED_DEMO
+        value: "true"

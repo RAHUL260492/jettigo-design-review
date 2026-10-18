@@ -13,7 +13,12 @@
     // Shared trip state so choices carry through the flow.
     state: {
       account: "passenger",
-      day: 29,
+      // Departure defaults to 11 days out so the demo never shows a past date.
+      date: (() => { const d = new Date(); d.setDate(d.getDate() + 11); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; })(),
+      view: null,
+      ref: "JG-742",
+      lead: "James Thompson",
+      chauffeur: { name: "Alexander", plate: "JTG-007" },
       time: "10:00",
       pax: 4,
       bags: 2,
@@ -37,6 +42,9 @@
     global7500: { name: "Bombardier Global 7500", cls: "Ultra-long range", yom: 2023, pax: 19, range: "7,700 nm", rate: 9800, est: 21400, cat: "ulr", img: "jet-global7500", time: "1h 50m" },
     falcon8x: { name: "Dassault Falcon 8X", cls: "Heavy", yom: 2021, pax: 14, range: "6,450 nm", rate: 7900, est: 16900, cat: "heavy", img: "opt-3", time: "1h 52m" },
   };
+  // Demo fleet is kept separately: live mode replaces J.jets with real quotes.
+  J.demoJets = J.jets;
+  J.jet = () => J.jets[J.state.jet] || Object.values(J.jets)[0] || J.demoJets.g650;
   J.amenities = { wine: 350, sound: 250, masks: 75 };
   J.cars = {
     sclass: { name: "Mercedes-Benz S-Class", cls: "Luxury sedan", pax: 3, bags: 3, price: 450, img: "car-sclass" },
@@ -46,7 +54,9 @@
   J.airports = ["London City (LCY)", "London Biggin Hill (BQH)", "Farnborough (FAB)", "Nice Côte d'Azur (NCE)", "Geneva (GVA)", "Paris Le Bourget (LBG)"];
   J.code = (a) => (a.match(/\((\w+)\)/) || [])[1] || a;
   J.city = (a) => a.replace(/ \(.*\)$/, "");
-  J.dow = (d) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date(2026, 9, d).getDay()];
+  J.MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  J.dateOf = (x = J.state.date) => new Date(x.y, x.m, x.d);
+  J.dow = (x = J.state.date) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][J.dateOf(x).getDay()];
   J.amenTotal = () => Object.keys(J.amenities).reduce((t, k) => t + (J.state.amen[k] ? J.amenities[k] : 0), 0);
   J.fees = 1640;
 
@@ -167,11 +177,32 @@
     return id && Object.prototype.hasOwnProperty.call(J.defs, id) ? id : "home";
   }
 
-  function render() {
+  let renderSeq = 0;
+  async function render() {
     J.timers.forEach((stop) => stop());
     J.timers = [];
     const id = current();
     const s = J.defs[id];
+    const seq = ++renderSeq;
+    // Live mode: fetch the screen's data first. Loaders may ask to sign in or redirect.
+    if (J.live && J.live.on && s.load) {
+      document.body.classList.add("is-loading");
+      try {
+        await s.load();
+      } catch (err) {
+        if (seq !== renderSeq) return;
+        document.body.classList.remove("is-loading");
+        if (err && err.redirect) {
+          if (err.message) J.toast(err.message, "info");
+          J.go(err.redirect);
+          return;
+        }
+        if (err && err.status === 401) return J.live.toLogin(id);
+        J.toast((err && err.message) || "Something went wrong", "circle-alert");
+      }
+      if (seq !== renderSeq) return;
+      document.body.classList.remove("is-loading");
+    }
     // Swap in a fresh root so listeners from the previous screen are dropped.
     const old = document.getElementById("app");
     const root = old.cloneNode(false);
@@ -215,6 +246,15 @@
     }
   });
 
+  /** "10d 4h" for far-off departures, "2h 14m 59s" on the day. */
+  J.countdown = (sec, withSeconds = false) => {
+    const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    if (d >= 2) return `${d}d ${h}h`;
+    const hh = d * 24 + h;
+    return withSeconds ? `${hh}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s` : `${hh}h ${String(m).padStart(2, "0")}m`;
+  };
+  J.current = current;
+  J.rerender = render;
   J.boot = () => {
     if (J.wire) document.documentElement.classList.add("wire");
     window.addEventListener("hashchange", render);
