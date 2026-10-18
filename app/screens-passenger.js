@@ -231,7 +231,9 @@
   function nextLeg() {
     const legs = J.tripLegs();
     const last = legs[legs.length - 1];
-    const to = J.airports.find((a) => a !== last.to && a !== last.from) || J.airports[0];
+    // Suggest a popular city not already in the trip.
+    const used = new Set(legs.flatMap((l) => [l.from, l.to]).map(J.code));
+    const to = J.airports.find((a) => !used.has(J.code(a)) && !a.startsWith("London") && a !== "Farnborough (FAB)") || J.airports.find((a) => a !== last.to) || J.airports[0];
     return { from: last.to, to, date: addDays(last.date, 2), time: "10:00" };
   }
   // Keep dates in order when an earlier flight moves later.
