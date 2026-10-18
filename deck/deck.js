@@ -19,7 +19,7 @@
 
   D.groups = ["Website & account", "Booking", "Day of travel", "Corporate", "Partners"];
   D.screens = [
-    { id: "home", t: "Landing page", g: 0, n: "Brand hero with the two primary actions, quick search on desktop, proof points, how it works, fleet teaser and membership band." },
+    { id: "home", t: "Landing page", g: 0, n: "Brand hero with the two primary actions, quick search on desktop, proof points, how it works, fleet teaser, membership band and App Store / Google Play badges." },
     { id: "login", t: "Passenger & corporate login", g: 0, n: "Account-type switch, one-time code by email or phone, company SSO, Apple / Google, and a guest quote path." },
     { id: "fleet", t: "Fleet gallery", g: 0, n: "Swipeable aircraft carousel, entry to the 360° tour, three headline specs and explore / quote actions." },
     { id: "cabin", t: "360° cabin tour", g: 0, n: "Immersive viewer with feature hotspots, scene switcher, aircraft story and a booking action." },

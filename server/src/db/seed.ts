@@ -3,19 +3,36 @@ import { newReferralCode } from "../routes/auth.js";
 import type { DB } from "./client.js";
 import { aircraft, airports, amenities, companies, operators, users } from "./schema.js";
 
+// Most popular private-aviation cities. Names match the app's route pickers.
 const AIRPORTS = [
   { code: "LCY", name: "London City", city: "London", country: "United Kingdom", lat: 51.5053, lon: 0.0553 },
   { code: "BQH", name: "London Biggin Hill", city: "London", country: "United Kingdom", lat: 51.3308, lon: 0.0325 },
   { code: "FAB", name: "Farnborough", city: "Farnborough", country: "United Kingdom", lat: 51.2758, lon: -0.7763 },
-  { code: "NCE", name: "Nice Côte d'Azur", city: "Nice", country: "France", lat: 43.6584, lon: 7.2159 },
   { code: "LBG", name: "Paris Le Bourget", city: "Paris", country: "France", lat: 48.9694, lon: 2.4414 },
+  { code: "NCE", name: "Nice Côte d'Azur", city: "Nice", country: "France", lat: 43.6584, lon: 7.2159 },
   { code: "GVA", name: "Geneva", city: "Geneva", country: "Switzerland", lat: 46.2381, lon: 6.1089 },
+  { code: "ZRH", name: "Zurich", city: "Zurich", country: "Switzerland", lat: 47.4647, lon: 8.5492 },
+  { code: "LIN", name: "Milan Linate", city: "Milan", country: "Italy", lat: 45.4451, lon: 9.2767 },
+  { code: "CIA", name: "Rome Ciampino", city: "Rome", country: "Italy", lat: 41.7994, lon: 12.5949 },
+  { code: "MUC", name: "Munich", city: "Munich", country: "Germany", lat: 48.3538, lon: 11.7861 },
+  { code: "IBZ", name: "Ibiza", city: "Ibiza", country: "Spain", lat: 38.8729, lon: 1.3731 },
   { code: "PMI", name: "Palma de Mallorca", city: "Palma", country: "Spain", lat: 39.5517, lon: 2.7388 },
-  { code: "DWC", name: "Dubai World Central", city: "Dubai", country: "United Arab Emirates", lat: 24.8961, lon: 55.1614 },
-  { code: "BOM", name: "Mumbai Chhatrapati Shivaji", city: "Mumbai", country: "India", lat: 19.0896, lon: 72.8656 },
-  { code: "DEL", name: "Delhi Indira Gandhi", city: "Delhi", country: "India", lat: 28.5562, lon: 77.1 },
-  { code: "TEB", name: "Teterboro", city: "New York", country: "United States", lat: 40.85, lon: -74.0608 },
-  { code: "VNY", name: "Van Nuys", city: "Los Angeles", country: "United States", lat: 34.2098, lon: -118.49 },
+  { code: "DWC", name: "Dubai", city: "Dubai", country: "United Arab Emirates", lat: 24.8961, lon: 55.1614 },
+  { code: "AUH", name: "Abu Dhabi", city: "Abu Dhabi", country: "United Arab Emirates", lat: 24.433, lon: 54.6511 },
+  { code: "DOH", name: "Doha", city: "Doha", country: "Qatar", lat: 25.2731, lon: 51.6081 },
+  { code: "RUH", name: "Riyadh", city: "Riyadh", country: "Saudi Arabia", lat: 24.9576, lon: 46.6988 },
+  { code: "BOM", name: "Mumbai", city: "Mumbai", country: "India", lat: 19.0896, lon: 72.8656 },
+  { code: "DEL", name: "Delhi", city: "Delhi", country: "India", lat: 28.5562, lon: 77.1 },
+  { code: "BLR", name: "Bengaluru", city: "Bengaluru", country: "India", lat: 13.1986, lon: 77.7066 },
+  { code: "HYD", name: "Hyderabad", city: "Hyderabad", country: "India", lat: 17.2403, lon: 78.4294 },
+  { code: "GOX", name: "Goa", city: "Goa", country: "India", lat: 15.7444, lon: 73.8606 },
+  { code: "MLE", name: "Malé, Maldives", city: "Malé", country: "Maldives", lat: 4.1918, lon: 73.5291 },
+  { code: "XSP", name: "Singapore Seletar", city: "Singapore", country: "Singapore", lat: 1.4169, lon: 103.8678 },
+  { code: "HKG", name: "Hong Kong", city: "Hong Kong", country: "Hong Kong", lat: 22.308, lon: 113.9185 },
+  { code: "TEB", name: "New York Teterboro", city: "New York", country: "United States", lat: 40.85, lon: -74.0608 },
+  { code: "VNY", name: "Los Angeles Van Nuys", city: "Los Angeles", country: "United States", lat: 34.2098, lon: -118.49 },
+  { code: "OPF", name: "Miami Opa-locka", city: "Miami", country: "United States", lat: 25.907, lon: -80.2784 },
+  { code: "ASE", name: "Aspen", city: "Aspen", country: "United States", lat: 39.2232, lon: -106.8689 },
 ];
 
 const AMENITIES = [
@@ -29,7 +46,14 @@ const AMENITIES = [
 
 /** Reference data every environment needs. Safe to run repeatedly. */
 export async function seedReference(db: DB) {
-  await db.insert(airports).values(AIRPORTS).onConflictDoNothing();
+  // Upsert so name and coordinate updates reach existing databases.
+  await db
+    .insert(airports)
+    .values(AIRPORTS)
+    .onConflictDoUpdate({
+      target: airports.code,
+      set: { name: sql`excluded.name`, city: sql`excluded.city`, country: sql`excluded.country`, lat: sql`excluded.lat`, lon: sql`excluded.lon` },
+    });
   await db.insert(amenities).values(AMENITIES).onConflictDoNothing();
 }
 

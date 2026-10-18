@@ -16,6 +16,11 @@
       // Departure defaults to 11 days out so the demo never shows a past date.
       date: (() => { const d = new Date(); d.setDate(d.getDate() + 11); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; })(),
       view: null,
+      tripType: "one", // "one" | "return" | "multi"
+      ret: null, // return date for round trips
+      retTime: "16:00",
+      legs: [], // extra flights for multi-city: { from, to, date, time }
+      calLeg: "out", // which date the calendar edits on round trips
       ref: "JG-742",
       lead: "James Thompson",
       chauffeur: { name: "Alexander", plate: "JTG-007" },
@@ -53,7 +58,28 @@
     rover: { name: "Range Rover Autobiography", cls: "Premium SUV", pax: 4, bags: 4, price: 520, img: "car-rover" },
     ghost: { name: "Rolls-Royce Ghost", cls: "Prestige", pax: 3, bags: 3, price: 890, img: "car-ghost" },
   };
-  J.airports = ["London City (LCY)", "London Biggin Hill (BQH)", "Farnborough (FAB)", "Nice Côte d'Azur (NCE)", "Geneva (GVA)", "Paris Le Bourget (LBG)"];
+  // Most popular private-aviation cities, grouped by region for the route pickers.
+  J.airportGroups = [
+    ["Europe", ["London City (LCY)", "London Biggin Hill (BQH)", "Farnborough (FAB)", "Paris Le Bourget (LBG)", "Nice Côte d'Azur (NCE)", "Geneva (GVA)", "Zurich (ZRH)", "Milan Linate (LIN)", "Rome Ciampino (CIA)", "Munich (MUC)", "Ibiza (IBZ)", "Palma de Mallorca (PMI)"]],
+    ["Middle East", ["Dubai (DWC)", "Abu Dhabi (AUH)", "Doha (DOH)", "Riyadh (RUH)"]],
+    ["India", ["Mumbai (BOM)", "Delhi (DEL)", "Bengaluru (BLR)", "Hyderabad (HYD)", "Goa (GOX)"]],
+    ["Asia Pacific", ["Singapore Seletar (XSP)", "Hong Kong (HKG)", "Malé, Maldives (MLE)"]],
+    ["Americas", ["New York Teterboro (TEB)", "Los Angeles Van Nuys (VNY)", "Miami Opa-locka (OPF)", "Aspen (ASE)"]],
+  ];
+  J.airports = J.airportGroups.flatMap(([, list]) => list);
+  /** <option>s grouped by region; airports not in a known region go under "Other". */
+  J.airportOptions = (selected) => {
+    const region = {};
+    J.airportGroups.forEach(([r, list]) => list.forEach((a) => (region[J.code(a)] = r)));
+    const groups = new Map(J.airportGroups.map(([r]) => [r, []]));
+    for (const a of J.airports) {
+      const r = region[J.code(a)] || "Other";
+      if (!groups.has(r)) groups.set(r, []);
+      groups.get(r).push(a);
+    }
+    return [...groups].filter(([, l]) => l.length).map(([r, l]) => `<optgroup label="${r}">${l.map((a) => `<option${a === selected ? " selected" : ""}>${J.esc(a)}</option>`).join("")}</optgroup>`).join("");
+  };
+  J.TIMES = ["07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"];
   J.code = (a) => (a.match(/\((\w+)\)/) || [])[1] || a;
   J.city = (a) => a.replace(/ \(.*\)$/, "");
   J.MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

@@ -10,12 +10,28 @@
       .join("")}</div>`;
   };
   const when = () => `${J.dow()} ${S.date.d} ${J.MONTHS[S.date.m]}`;
-  const legs = () => `${J.code(S.origin)} → ${J.code(S.dest)}`;
+  const legs = () => {
+    if (S.tripType === "return") return `${J.code(S.origin)} ⇄ ${J.code(S.dest)}`;
+    if (S.tripType === "multi") return [S.origin, S.dest, ...S.legs.map((l) => l.to)].map(J.code).join(" → ");
+    return `${J.code(S.origin)} → ${J.code(S.dest)}`;
+  };
   J.when = when; J.legs = legs;
-  const tripLine = () => `${when()} · ${S.time} · ${S.pax} passenger${S.pax > 1 ? "s" : ""}`;
+  const paxText = () => `${S.pax} passenger${S.pax > 1 ? "s" : ""}`;
+  const tripLine = () => {
+    if (S.tripType === "return" && S.ret) return `${when()} – ${J.dow(S.ret)} ${S.ret.d} ${J.MONTHS[S.ret.m]} · Return · ${paxText()}`;
+    if (S.tripType === "multi") return `${1 + S.legs.length} flights from ${when()} · ${paxText()}`;
+    return `${when()} · ${S.time} · ${paxText()}`;
+  };
   J.tripLine = tripLine;
 
   /* =============== Landing =============== */
+  // Store badges for the landing page. Marks from Simple Icons (CC0).
+  const STORE = {
+    ios: { top: "Download on the", name: "App Store", path: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" },
+    android: { top: "Get it on", name: "Google Play", path: "M18.4395 5.5586c-.675 1.1664-1.352 2.3318-2.0274 3.498-.0366-.0155-.0742-.0286-.1113-.043-1.8249-.6957-3.484-.8-4.42-.787-1.8551.0185-3.3544.4643-4.2597.8203-.084-.1494-1.7526-3.021-2.0215-3.4864a1.1451 1.1451 0 0 0-.1406-.1914c-.3312-.364-.9054-.4859-1.379-.203-.475.282-.7136.9361-.3886 1.5019 1.9466 3.3696-.0966-.2158 1.9473 3.3593.0172.031-.4946.2642-1.3926 1.0177C2.8987 12.176.452 14.772 0 18.9902h24c-.119-1.1108-.3686-2.099-.7461-3.0683-.7438-1.9118-1.8435-3.2928-2.7402-4.1836a12.1048 12.1048 0 0 0-2.1309-1.6875c.6594-1.122 1.312-2.2559 1.9649-3.3848.2077-.3615.1886-.7956-.0079-1.1191a1.1001 1.1001 0 0 0-.8515-.5332c-.5225-.0536-.9392.3128-1.0488.5449zm-.0391 8.461c.3944.5926.324 1.3306-.1563 1.6503-.4799.3197-1.188.0985-1.582-.4941-.3944-.5927-.324-1.3307.1563-1.6504.4727-.315 1.1812-.1086 1.582.4941zM7.207 13.5273c.4803.3197.5506 1.0577.1563 1.6504-.394.5926-1.1038.8138-1.584.4941-.48-.3197-.5503-1.0577-.1563-1.6504.4008-.6021 1.1087-.8106 1.584-.4941z" },
+  };
+  const storeBadge = (k) => { const b = STORE[k]; return `<a class="store-badge" href="#/home" aria-label="${b.top} ${b.name}"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${b.path}"/></svg><span><small>${b.top}</small><b>${b.name}</b></span></a>`; };
+
   J.screen("home", {
     doc: "Private jets, premium and accessible",
     group: "Website",
@@ -83,6 +99,13 @@
         <div class="card navy" style="padding:32px;border-radius:24px;display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:center">
           <div class="stack gap-12"><span class="elite" style="color:var(--gold-200);border-color:var(--gold)">${ic("crown")} Membership</span><h2 class="h1">Priority access, guaranteed rates and a personal travel manager.</h2></div>
           <div class="row wrap gap-12" style="justify-content:flex-end"><a class="btn gold round lg" href="#/membership">Explore membership</a><a class="btn glass round lg" href="#/corp">For business</a></div>
+        </div>
+      </section>
+
+      <section class="lp-section" style="padding-top:0">
+        <div class="store-strip">
+          <div class="stack gap-8"><span class="label">The app</span><h2 class="h1">Jettingo on iPhone and Android.</h2><p class="muted">Book, track your flight and reach the concierge from your phone. The web app works on any browser.</p></div>
+          <div class="store-badges">${storeBadge("ios")}${storeBadge("android")}</div>
         </div>
       </section>
 
@@ -188,42 +211,111 @@
   });
 
   /* =============== Booking: route =============== */
+  /* ---------- Trip helpers (one way, return, multi-city) ---------- */
+  const addDays = (x, n) => { const d = J.dateOf(x); d.setDate(d.getDate() + n); return { y: d.getFullYear(), m: d.getMonth(), d: d.getDate() }; };
+  const before = (a, b) => J.dateOf(a) < J.dateOf(b);
+  const fmtDate = (x) => `${J.dow(x)} ${x.d} ${J.MONTHS[x.m]}`;
+  const iso = (x) => `${x.y}-${String(x.m + 1).padStart(2, "0")}-${String(x.d).padStart(2, "0")}`;
+  const fromIso = (v) => { const [y, m, d] = v.split("-").map(Number); return { y, m: m - 1, d }; };
+  const timeOptions = (sel) => J.TIMES.map((t) => `<option${t === sel ? " selected" : ""}>${t}</option>`).join("");
+  /** Every flight in the trip, in order. */
+  J.tripLegs = () =>
+    S.tripType === "return"
+      ? [{ from: S.origin, to: S.dest, date: S.date, time: S.time }, { from: S.dest, to: S.origin, date: S.ret, time: S.retTime }]
+      : [{ from: S.origin, to: S.dest, date: S.date, time: S.time }, ...(S.tripType === "multi" ? S.legs : [])];
+  J.legCount = () => J.tripLegs().length;
+  // Demo pricing scales per flight; live bookings already carry the API's price.
+  const perTrip = () => (J.live && J.live.on ? 1 : J.legCount());
+  J.tripEst = (j) => j.est * perTrip();
+  J.tripFees = () => J.fees * perTrip();
+  function nextLeg() {
+    const legs = J.tripLegs();
+    const last = legs[legs.length - 1];
+    const to = J.airports.find((a) => a !== last.to && a !== last.from) || J.airports[0];
+    return { from: last.to, to, date: addDays(last.date, 2), time: "10:00" };
+  }
+  // Keep dates in order when an earlier flight moves later.
+  function keepOrder() {
+    if (S.tripType === "return" && S.ret && before(S.ret, S.date)) S.ret = addDays(S.date, 1);
+    let prev = S.date;
+    for (const l of S.legs) {
+      if (before(l.date, prev)) l.date = prev;
+      prev = l.date;
+    }
+  }
+
   function calendar() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const v = S.view || (S.view = { y: S.date.y, m: S.date.m });
+    const editingReturn = S.tripType === "return" && S.calLeg === "ret";
+    const active = editingReturn ? S.ret : S.date;
+    const v = S.view || (S.view = { y: active.y, m: active.m });
     const first = new Date(v.y, v.m, 1).getDay();
     const days = new Date(v.y, v.m + 1, 0).getDate();
     const monthIdx = (x) => x.y * 12 + x.m;
     const canPrev = monthIdx(v) > monthIdx({ y: today.getFullYear(), m: today.getMonth() });
     const canNext = monthIdx(v) < monthIdx({ y: today.getFullYear(), m: today.getMonth() }) + 11;
+    const minDate = editingReturn ? J.dateOf(S.date) : today;
     let cells = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => `<span class="dow">${d}</span>`).join("");
     for (let i = 0; i < first; i++) cells += "<span></span>";
     for (let d = 1; d <= days; d++) {
       const date = new Date(v.y, v.m, d);
-      const on = S.date.y === v.y && S.date.m === v.m && S.date.d === d;
+      const is = (x) => x && x.y === v.y && x.m === v.m && x.d === d;
+      const on = is(S.date) || (S.tripType === "return" && is(S.ret));
+      const inRange = S.tripType === "return" && S.ret && date > J.dateOf(S.date) && date < J.dateOf(S.ret);
       const isToday = date.getTime() === today.getTime();
-      cells += `<button data-day="${d}" class="${on ? "on" : ""} ${isToday ? "today" : ""}" ${date < today ? "disabled" : ""} aria-label="${d} ${J.MONTHS[v.m]}">${d}</button>`;
+      cells += `<button type="button" data-day="${d}" class="${on ? "on" : ""} ${inRange ? "range" : ""} ${isToday ? "today" : ""}" ${date < minDate ? "disabled" : ""} aria-label="${d} ${J.MONTHS[v.m]}">${d}</button>`;
     }
     const monthName = new Date(v.y, v.m, 1).toLocaleString("en-GB", { month: "long", year: "numeric" });
-    return `<div class="card cal" id="calcard">
-      <div class="row between" style="padding:4px 4px 10px"><button class="iconbtn" data-cal="-1" aria-label="Previous month" ${canPrev ? "" : "disabled"}>${ic("chevron-left")}</button><b>${monthName}</b><button class="iconbtn" data-cal="1" aria-label="Next month" ${canNext ? "" : "disabled"}>${ic("chevron-right")}</button></div>
+    const legSwitch = S.tripType === "return"
+      ? `<div class="seg block" id="calleg" style="margin-bottom:10px"><button type="button" class="${S.calLeg === "out" ? "on" : ""}" data-v="out">Depart · ${fmtDate(S.date)}</button><button type="button" class="${S.calLeg === "ret" ? "on" : ""}" data-v="ret">Return · ${fmtDate(S.ret)}</button></div>`
+      : "";
+    return `<div class="card cal" id="calcard">${legSwitch}
+      <div class="row between" style="padding:4px 4px 10px"><button type="button" class="iconbtn" data-cal="-1" aria-label="Previous month" ${canPrev ? "" : "disabled"}>${ic("chevron-left")}</button><b>${monthName}</b><button type="button" class="iconbtn" data-cal="1" aria-label="Next month" ${canNext ? "" : "disabled"}>${ic("chevron-right")}</button></div>
       <div class="cal-grid" id="cal">${cells}</div>
       <div class="divider"></div>
-      <div class="row" style="padding:2px 6px">${ic("clock-3")}<select class="grow" id="time" aria-label="Departure time" style="border:0;background:none;font-weight:600">${["08:00", "09:00", "10:00", "11:00", "12:00", "14:00", "16:00"].map((t) => `<option ${t === S.time ? "selected" : ""}>${t}</option>`).join("")}</select><span class="pill">${J.live && J.live.on ? "UTC" : "Local time"}</span></div>
+      <div class="row" style="padding:2px 6px">${ic("clock-3")}<span class="small faint" style="white-space:nowrap">${editingReturn ? "Return time" : "Departure time"}</span><select class="grow" id="time" aria-label="${editingReturn ? "Return time" : "Departure time"}" style="border:0;background:none;font-weight:600;text-align:right">${timeOptions(editingReturn ? S.retTime : S.time)}</select><span class="pill">${J.live && J.live.on ? "UTC" : "Local time"}</span></div>
     </div>`;
   }
-  const summary = (withBtn) => `<div class="card pad-lg stack gap-12 sticky">
-      <span class="label">Trip summary</span>
-      <div class="row top gap-12"><div class="stack gap-8" style="align-items:center;padding-top:4px"><i style="width:8px;height:8px;border-radius:50%;background:var(--gold)"></i><i style="width:1px;height:28px;background:var(--line-2)"></i><i style="width:8px;height:8px;border-radius:50%;border:2px solid var(--navy-900)"></i></div>
-        <div class="stack gap-12"><div><div class="strong" id="sum-o">${S.origin}</div><div class="xs faint">Departure</div></div><div><div class="strong" id="sum-d">${S.dest}</div><div class="xs faint">Arrival</div></div></div></div>
+
+  const legRows = () =>
+    S.legs.map((l, i) => `<div class="card stack gap-12" data-leg="${i}">
+        <div class="row between"><span class="label">Flight ${i + 2}</span><button type="button" class="iconbtn" data-act="rm-leg" data-i="${i}" aria-label="Remove flight ${i + 2}">${ic("x")}</button></div>
+        <label class="inputbox">${ic("plane-takeoff")}<div class="grow"><div class="lbl">From</div><select data-leg-f="from" data-i="${i}">${J.airportOptions(l.from)}</select></div>${ic("chevron-down")}</label>
+        <label class="inputbox">${ic("plane-landing")}<div class="grow"><div class="lbl">To</div><select data-leg-f="to" data-i="${i}">${J.airportOptions(l.to)}</select></div>${ic("chevron-down")}</label>
+        <div class="g2 gap-8" style="grid-template-columns:1.3fr 1fr">
+          <label class="inputbox">${ic("calendar-days")}<div class="grow"><div class="lbl">Date</div><input type="date" data-leg-f="date" data-i="${i}" value="${iso(l.date)}" min="${iso(i ? S.legs[i - 1].date : S.date)}"></div></label>
+          <label class="inputbox">${ic("clock-3")}<div class="grow"><div class="lbl">Time</div><select data-leg-f="time" data-i="${i}">${timeOptions(l.time)}</select></div></label>
+        </div>
+      </div>`).join("") +
+    (S.legs.length < 3
+      ? `<button type="button" class="btn ghost block" data-act="add-leg">${ic("plus")} Add another flight</button>`
+      : `<p class="small faint">Up to 4 flights per trip online. Your concierge can arrange longer itineraries.</p>`);
+
+  const tripBox = () => `
+      <div class="stack gap-12">
+        <div class="row between wrap gap-8"><h2 class="h2">Where to?</h2><div class="seg sm" id="trip-type">${[["one", "One way"], ["return", "Return"], ["multi", "Multi-city"]].map(([v, l]) => `<button type="button" class="${S.tripType === v ? "on" : ""}" data-v="${v}">${l}</button>`).join("")}</div></div>
+        ${S.tripType === "multi" ? `<span class="label">Flight 1</span>` : ""}
+        <div style="position:relative" class="stack gap-8">
+          <label class="inputbox">${ic("plane-takeoff")}<div class="grow"><div class="lbl">Origin</div><select id="org">${J.airportOptions(S.origin)}</select></div>${ic("chevron-down")}</label>
+          <label class="inputbox">${ic("plane-landing")}<div class="grow"><div class="lbl">Destination</div><select id="dst">${J.airportOptions(S.dest)}</select></div>${ic("chevron-down")}</label>
+          <button type="button" class="iconbtn" data-act="swap" aria-label="Swap origin and destination" style="position:absolute;right:52px;top:50%;transform:translateY(-50%);background:var(--white);border:1px solid var(--line-2);width:38px;height:38px">${ic("arrow-down-up")}</button>
+        </div>
+      </div>
+      <div class="stack gap-12"><h2 class="h2">${S.tripType === "multi" ? "Flight 1 date &amp; time" : "Date &amp; time"}</h2>${calendar()}</div>
+      ${S.tripType === "multi" ? `<div class="stack gap-12">${legRows()}</div>` : ""}`;
+
+  const summary = (withBtn) => {
+    const legs = J.tripLegs();
+    return `<div class="card pad-lg stack gap-12 sticky">
+      <div class="row between"><span class="label">Trip summary</span><span class="pill">${{ one: "One way", return: "Return", multi: `${legs.length} flights` }[S.tripType]}</span></div>
+      <div class="list">${legs.map((l, i) => `<div><div class="row between"><b>${J.code(l.from)} → ${J.code(l.to)}</b><span class="xs faint">${legs.length > 1 ? `Flight ${i + 1}` : ""}</span></div><div class="small muted">${J.esc(J.city(l.from))} to ${J.esc(J.city(l.to))}</div><div class="small">${fmtDate(l.date)}, ${l.time}</div></div>`).join("")}</div>
       <div class="divider" style="margin:4px 0"></div>
-      <div class="kv"><span class="k">Date</span><span class="v" id="sum-date">${when()}, ${S.time}</span></div>
-      <div class="kv"><span class="k">Passengers</span><span class="v" id="sum-pax">${S.pax}</span></div>
-      <div class="kv"><span class="k">Bags</span><span class="v" id="sum-bags">${S.bags} · ${S.weight} ${S.unit}</span></div>
-      <div class="kv"><span class="k">Est. flight time</span><span class="v">1h 50m</span></div>
+      <div class="kv"><span class="k">Passengers</span><span class="v">${S.pax}</span></div>
+      <div class="kv"><span class="k">Bags</span><span class="v">${S.bags} · ${J.esc(S.weight)} ${S.unit}</span></div>
       ${withBtn ? `<a class="btn block lg mt-8" href="#/jets">${ic("search")} Search available jets</a>` : ""}
     </div>`;
+  };
 
   J.screen("route", {
     title: "Book a flight",
@@ -237,68 +329,114 @@
     body: () => `${progress(0)}
       <div class="split mt-16">
         <div class="stack gap-24">
-          <div class="stack gap-12">
-            <div class="row between"><h2 class="h2">Where to?</h2><div class="seg sm" id="trip-type"><button class="on" data-v="one">One way</button><button data-v="return">Return</button><button data-v="multi">Multi-city</button></div></div>
-            <div style="position:relative" class="stack gap-8">
-              <label class="inputbox">${ic("plane-takeoff")}<div class="grow"><div class="lbl">Origin</div><select id="org">${J.airports.map((a) => `<option>${a}</option>`).join("")}</select></div>${ic("chevron-down")}</label>
-              <label class="inputbox">${ic("plane-landing")}<div class="grow"><div class="lbl">Destination</div><select id="dst">${J.airports.map((a) => `<option>${a}</option>`).join("")}</select></div>${ic("chevron-down")}</label>
-              <button class="iconbtn" data-act="swap" aria-label="Swap origin and destination" style="position:absolute;right:52px;top:50%;transform:translateY(-50%);background:var(--white);border:1px solid var(--line-2);width:38px;height:38px">${ic("arrow-down-up")}</button>
-            </div>
-          </div>
-          <div class="stack gap-12"><h2 class="h2">Date &amp; time</h2>${calendar()}</div>
+          <div class="stack gap-24" id="tripbox">${tripBox()}</div>
           <div class="stack gap-12"><h2 class="h2">Passengers &amp; baggage</h2>
             <div class="g2 gap-12">
-              <div class="inputbox">${ic("users")}<div class="grow"><div class="lbl">Passengers</div><div class="val">Adults</div></div><div class="stepper" data-min="1" data-max="19" id="pax"><button data-d="-" aria-label="Fewer">${ic("minus")}</button><output>${S.pax}</output><button data-d="+" aria-label="More">${ic("plus")}</button></div></div>
-              <div class="inputbox">${ic("luggage")}<div class="grow"><div class="lbl">Number of bags</div><div class="val">Checked</div></div><div class="stepper" data-min="0" data-max="30" id="bags"><button data-d="-" aria-label="Fewer">${ic("minus")}</button><output>${S.bags}</output><button data-d="+" aria-label="More">${ic("plus")}</button></div></div>
+              <div class="inputbox">${ic("users")}<div class="grow"><div class="lbl">Passengers</div><div class="val">Adults</div></div><div class="stepper" data-min="1" data-max="19" id="pax"><button type="button" data-d="-" aria-label="Fewer">${ic("minus")}</button><output>${S.pax}</output><button type="button" data-d="+" aria-label="More">${ic("plus")}</button></div></div>
+              <div class="inputbox">${ic("luggage")}<div class="grow"><div class="lbl">Number of bags</div><div class="val">Checked</div></div><div class="stepper" data-min="0" data-max="30" id="bags"><button type="button" data-d="-" aria-label="Fewer">${ic("minus")}</button><output>${S.bags}</output><button type="button" data-d="+" aria-label="More">${ic("plus")}</button></div></div>
             </div>
-            <div class="inputbox">${ic("weight")}<div class="grow"><div class="lbl">Total baggage weight</div><input id="wt" type="number" inputmode="numeric" value="${S.weight}" aria-label="Total baggage weight"></div><div class="seg sm dark-on" id="unit"><button class="${S.unit === "KG" ? "on" : ""}" data-v="KG">KG</button><button class="${S.unit === "LBS" ? "on" : ""}" data-v="LBS">LBS</button></div></div>
+            <div class="inputbox">${ic("weight")}<div class="grow"><div class="lbl">Total baggage weight</div><input id="wt" type="number" min="0" inputmode="numeric" value="${J.esc(S.weight)}" aria-label="Total baggage weight"></div><div class="seg sm dark-on" id="unit"><button type="button" class="${S.unit === "KG" ? "on" : ""}" data-v="KG">KG</button><button type="button" class="${S.unit === "LBS" ? "on" : ""}" data-v="LBS">LBS</button></div></div>
           </div>
         </div>
-        <div class="desk-only">${summary(true)}</div>
+        <div class="desk-only" id="sumbox">${summary(true)}</div>
       </div>`,
     init(root) {
+      const sumbox = root.querySelector("#sumbox");
       const upd = () => {
-        const q = (id) => root.querySelector(id);
-        q("#sum-o").textContent = S.origin;
-        q("#sum-d").textContent = S.dest;
-        q("#sum-date").textContent = `${when()}, ${S.time}`;
-        q("#sum-pax").textContent = S.pax;
-        q("#sum-bags").textContent = `${S.bags} · ${S.weight} ${S.unit}`;
+        sumbox.innerHTML = summary(true);
+        J.icons(sumbox);
       };
-      const org = root.querySelector("#org"), dst = root.querySelector("#dst");
-      org.value = S.origin; dst.value = S.dest;
-      org.onchange = () => { S.origin = org.value; upd(); };
-      dst.onchange = () => { S.dest = dst.value; upd(); };
+      const refresh = () => {
+        root.querySelector("#tripbox").innerHTML = tripBox();
+        J.icons(root.querySelector("#tripbox"));
+        upd();
+      };
+      root.addEventListener("seg", (e) => {
+        const id = e.target.id;
+        if (id === "trip-type") {
+          S.tripType = e.detail;
+          S.calLeg = "out";
+          if (S.tripType === "return" && !S.ret) S.ret = addDays(S.date, 3);
+          if (S.tripType === "multi" && !S.legs.length) S.legs = [nextLeg()];
+          keepOrder();
+          S.view = { y: S.date.y, m: S.date.m };
+          refresh();
+        } else if (id === "calleg") {
+          S.calLeg = e.detail;
+          const d = S.calLeg === "ret" ? S.ret : S.date;
+          S.view = { y: d.y, m: d.m };
+          refresh();
+        } else if (id === "unit") {
+          S.unit = e.detail;
+          upd();
+        }
+      });
       root.addEventListener("click", (e) => {
         const nav = e.target.closest("[data-cal]");
         if (nav && !nav.disabled) {
           const v = new Date(S.view.y, S.view.m + +nav.dataset.cal, 1);
           S.view = { y: v.getFullYear(), m: v.getMonth() };
-          root.querySelector("#calcard").outerHTML = calendar();
-          J.icons(root);
-          root.querySelector("#time").onchange = (ev) => { S.time = ev.target.value; upd(); };
-          return;
+          return refresh();
         }
-        const b = e.target.closest("#cal button[data-day]");
-        if (!b || b.disabled) return;
-        root.querySelectorAll("#cal button").forEach((x) => x.classList.toggle("on", x === b));
-        S.date = { y: S.view.y, m: S.view.m, d: +b.dataset.day }; upd();
+        const day = e.target.closest("#cal button[data-day]");
+        if (day && !day.disabled) {
+          const picked = { y: S.view.y, m: S.view.m, d: +day.dataset.day };
+          if (S.tripType === "return" && S.calLeg === "ret") S.ret = picked;
+          else {
+            S.date = picked;
+            // After choosing the outbound date on a round trip, move straight on to the return date.
+            if (S.tripType === "return") S.calLeg = "ret";
+          }
+          keepOrder();
+          return refresh();
+        }
+        if (e.target.closest('[data-act="add-leg"]')) {
+          S.legs.push(nextLeg());
+          return refresh();
+        }
+        const rm = e.target.closest('[data-act="rm-leg"]');
+        if (rm) {
+          S.legs.splice(+rm.dataset.i, 1);
+          if (!S.legs.length) S.tripType = "one";
+          return refresh();
+        }
+        if (e.target.closest('[data-act="swap"]')) {
+          [S.origin, S.dest] = [S.dest, S.origin];
+          return refresh();
+        }
       });
-      root.querySelector("#trip-type").addEventListener("seg", (e) => {
-        if (e.detail === "one") return;
-        J.toast("This prototype covers one-way trips. Return and multi-city follow the same steps.", "info");
-        root.querySelectorAll("#trip-type button").forEach((b) => b.classList.toggle("on", b.dataset.v === "one"));
+      root.addEventListener("change", (e) => {
+        const t = e.target;
+        if (t.id === "org") S.origin = t.value;
+        else if (t.id === "dst") S.dest = t.value;
+        else if (t.id === "time") {
+          if (S.tripType === "return" && S.calLeg === "ret") S.retTime = t.value;
+          else S.time = t.value;
+        } else if (t.dataset.legF) {
+          const leg = S.legs[+t.dataset.i];
+          if (t.dataset.legF === "date") {
+            if (!t.value) return;
+            leg.date = fromIso(t.value);
+            keepOrder();
+            return refresh();
+          }
+          leg[t.dataset.legF] = t.value;
+        } else return;
+        upd();
       });
-      root.querySelector("#time").onchange = (e) => { S.time = e.target.value; upd(); };
       root.querySelector("#pax").addEventListener("step", (e) => { S.pax = e.detail; upd(); });
       root.querySelector("#bags").addEventListener("step", (e) => { S.bags = e.detail; upd(); });
-      root.querySelector("#unit").addEventListener("seg", (e) => { S.unit = e.detail; upd(); });
-      root.querySelector("#wt").oninput = (e) => { S.weight = e.target.value || 0; upd(); };
-      root.querySelector('[data-act="swap"]').onclick = (e) => {
-        e.preventDefault();
-        [S.origin, S.dest] = [S.dest, S.origin];
-        org.value = S.origin; dst.value = S.dest; upd();
-      };
+      root.querySelector("#wt").oninput = (e) => { S.weight = Math.max(0, +e.target.value || 0); upd(); };
+      // Validate before searching (runs before live mode's own handler).
+      root.addEventListener("click", (e) => {
+        if (!e.target.closest('a[href="#/jets"]')) return;
+        const bad = J.tripLegs().findIndex((l) => l.from === l.to);
+        if (bad >= 0) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          J.toast(J.legCount() > 1 ? `Flight ${bad + 1} departs and arrives at the same airport` : "Choose a destination different from the origin", "circle-alert");
+        }
+      }, true);
     },
   });
 
@@ -315,7 +453,7 @@
           <div class="s">${ic("globe-2")}<div><b>${j.range}</b><span>Range</span></div></div>
           <div class="s">${ic("timer")}<div><b>${money(j.rate)}/hr</b><span>Rate</span></div></div>
         </div>
-        <div class="row between" style="padding-top:4px;border-top:1px solid var(--line)"><div><div class="xs faint">Estimated trip</div><b style="font-size:18px">${money(j.est)}</b></div>${small ? `<span class="pill">Seats ${j.pax} · too small</span>` : `<a class="btn" href="#/travelers" data-jet="${k}" style="min-width:120px">Select</a>`}</div>
+        <div class="row between" style="padding-top:4px;border-top:1px solid var(--line)"><div><div class="xs faint">Estimated trip${J.legCount() > 1 ? ` · ${J.legCount()} flights` : ""}</div><b style="font-size:18px">${money(J.tripEst(j))}</b></div>${small ? `<span class="pill">Seats ${j.pax} · too small</span>` : `<a class="btn" href="#/travelers" data-jet="${k}" style="min-width:120px">Select</a>`}</div>
       </div>
     </article>`;
   };
@@ -328,7 +466,7 @@
     back: "route",
     action: () => `<a class="iconbtn" href="#/membership" aria-label="Account">${ic("circle-user-round")}</a>`,
     body: () => `${progress(1)}
-      <div class="route-banner mt-16"><div><div class="r">${J.city(S.origin)} (${J.code(S.origin)}) → ${J.city(S.dest)} (${J.code(S.dest)})</div><div class="m">${tripLine()}</div></div><a class="btn glass sm" href="#/route">${ic("pencil")} Edit</a></div>
+      <div class="route-banner mt-16"><div><div class="r">${S.tripType === "one" ? `${J.esc(J.city(S.origin))} (${J.code(S.origin)}) → ${J.esc(J.city(S.dest))} (${J.code(S.dest)})` : legs()}</div><div class="m">${tripLine()}</div></div><a class="btn glass sm" href="#/route">${ic("pencil")} Edit</a></div>
       <a class="card row between hover mt-16" href="#/compare" style="border-color:var(--gold-200);background:var(--gold-100)"><div class="row gap-12"><span class="folder" style="background:var(--gold)">${ic("scale")}</span><div><b>${Object.keys(J.jets).length} operator quotes received</b><div class="small muted">Compare aircraft, cabin and price side by side</div></div></div>${ic("chevron-right")}</a>
       <div class="row wrap gap-8 mt-16"><button class="chip" data-f="all" style="background:var(--navy-900);color:#fff;border-color:var(--navy-900)">All jets</button><button class="chip" data-f="mid">Midsize</button><button class="chip" data-f="heavy">Heavy</button><button class="chip" data-f="ulr">Ultra-long range</button><span class="grow"></span><span class="small faint">Sorted by recommended</span></div>
       <div class="g2 mt-16">${Object.keys(J.jets).map(jetCard).join("")}</div>`,
@@ -373,7 +511,7 @@
       <div class="compare">
         <div class="rh"></div>${cell((o, j) => `${ph(j.img, j.name)}<b>Option ${opts.indexOf(o) + 1}</b><div style="margin-top:6px">${o.tag}</div>`)}
         <div class="rh">Aircraft &amp; YOM</div>${cell((o, j) => `${J.esc(j.name)} (${j.yom})`)}
-        <div class="rh">Quote</div>${cell((o, j) => `<b style="font-size:18px">${money(j.est)}</b><span class="xs faint">before taxes</span>`)}
+        <div class="rh">Quote</div>${cell((o, j) => `<b style="font-size:18px">${money(J.tripEst(j))}</b><span class="xs faint">before taxes${J.legCount() > 1 ? `, ${J.legCount()} flights` : ""}</span>`)}
         <div class="rh">Cabin amenities</div>${cell((o) => o.amen)}
         <div class="rh">Baggage allowance</div>${cell((o) => o.bag)}
         <div class="rh">Flight time</div>${cell((o, j) => j.time)}
@@ -505,7 +643,7 @@
   });
 
   /* =============== Review & pay =============== */
-  const total = () => J.jet().est + J.amenTotal() + J.fees;
+  const total = () => J.tripEst(J.jet()) + J.amenTotal() + J.tripFees();
   const priceCard = () => {
     const j = J.jet();
     return `<div class="card pad-lg stack gap-8 sticky">
@@ -513,11 +651,13 @@
       <div class="divider"></div>
       <div class="kv"><span class="k">Route</span><span class="v">${legs()}</span></div>
       <div class="kv"><span class="k">Departure</span><span class="v">${when()}, ${S.time}</span></div>
+      ${S.tripType === "return" && S.ret ? `<div class="kv"><span class="k">Return</span><span class="v">${J.dow(S.ret)} ${S.ret.d} ${J.MONTHS[S.ret.m]}, ${S.retTime}</span></div>` : ""}
+      ${S.tripType === "multi" ? `<div class="kv"><span class="k">Flights</span><span class="v">${J.legCount()}</span></div>` : ""}
       <div class="kv"><span class="k">Passengers</span><span class="v">${S.pax}</span></div>
       <div class="divider"></div>
-      <div class="kv"><span class="k">Flight quote</span><span class="v">${money(j.est)}</span></div>
+      <div class="kv"><span class="k">Flight quote${J.legCount() > 1 ? ` (${J.legCount()} flights)` : ""}</span><span class="v">${money(J.tripEst(j))}</span></div>
       <div class="kv"><span class="k">Amenities</span><span class="v">${money(J.amenTotal())}</span></div>
-      <div class="kv"><span class="k">Taxes &amp; fees</span><span class="v">${money(J.fees)}</span></div>
+      <div class="kv"><span class="k">Taxes &amp; fees</span><span class="v">${money(J.tripFees())}</span></div>
       <div class="divider"></div>
       <div class="row between"><b>Total</b><b style="font-size:28px;letter-spacing:-0.02em">${money(total())}</b></div>
       <button class="btn block lg mt-8 desk-only" data-act="pay">${ic("lock")} Confirm &amp; pay</button>
@@ -587,11 +727,13 @@
               <div><div class="k">To</div><div class="v">${J.city(S.dest)}</div></div>
               <div><div class="k">Date</div><div class="v">${when()} ${S.date.y}</div></div>
               <div><div class="k">Departs</div><div class="v">${S.time}</div></div>
+              ${S.tripType === "return" && S.ret ? `<div><div class="k">Return</div><div class="v">${J.dow(S.ret)} ${S.ret.d} ${J.MONTHS[S.ret.m]}</div></div><div><div class="k">Return departs</div><div class="v">${S.retTime}</div></div>` : ""}
             </div>
           </div>
           <div class="stack gap-12"><button class="btn block lg" style="background:#000" data-toast="Pass added to Apple Wallet" data-icon="wallet">${ic("wallet")} Add to Apple Wallet</button><a class="btn ghost block lg" href="#/trip">Go to trip dashboard</a></div>
         </div>
         <div class="stack gap-12">
+          ${J.legCount() > 1 ? `<div class="card stack gap-8"><span class="label">Itinerary · ${J.legCount()} flights</span><div class="list">${J.tripLegs().map((l, i) => `<div class="row between"><div><b>${J.code(l.from)} → ${J.code(l.to)}</b><div class="xs faint">Flight ${i + 1}</div></div><span class="small">${J.dow(l.date)} ${l.date.d} ${J.MONTHS[l.date.m]}, ${l.time}</span></div>`).join("")}</div></div>` : ""}
           <span class="label">Complete your journey</span>
           <a class="card row between hover" href="#/ground"><div class="row gap-12"><span class="folder">${ic("car-front")}</span><div><b>Book ground transport</b><div class="small muted">Chauffeur waiting on arrival in ${J.city(S.dest).split(" ")[0]}</div></div></div>${ic("chevron-right")}</a>
           <a class="card row between hover" href="#/amenities"><div class="row gap-12"><span class="folder">${ic("utensils")}</span><div><b>Catering &amp; amenities</b><div class="small muted">Change until 24h before departure</div></div></div>${ic("chevron-right")}</a>

@@ -152,6 +152,7 @@
   /** Put an API booking into the shared state every screen reads from. */
   function applyBooking(b) {
     S.booking = b;
+    S.tripType = "one"; // live bookings are single flights for now
     S.ref = b.ref;
     S.lead = b.travelers[0]?.fullName || "";
     S.travelers = Object.fromEntries(b.travelers.map((t) => [t.position, { name: t.fullName, passport: t.passport, nat: t.nationality, dob: t.dateOfBirth }]));
@@ -296,6 +297,7 @@
     load: ensureAirports,
     init(root) {
       on(root, "click", 'a[href="#/jets"]', async (el) => {
+        if (S.tripType !== "one") return J.toast("The live API prices one-way trips for now. Return and multi-city work in the prototype; switch to One way to search live.", "info");
         busy(el, true);
         try {
           await runSearch();
