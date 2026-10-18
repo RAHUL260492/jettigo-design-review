@@ -52,7 +52,7 @@
     const el = document.getElementById("d-top");
     el.outerHTML = `<header class="d-top"><div class="d-wrap d-top-in">
       <a href="index.html">${J_BRAND}</a><span class="tag">Design review · Phases 1 &amp; 2</span>
-      <nav class="d-nav" aria-label="Sections">${D.pages.map((p) => (p.sep ? `<span class="sep"></span>` : `<a href="${p.href}" class="${p.href === active ? "on" : ""}">${p.label}</a>`)).join("")}</nav>
+      <nav class="d-nav" aria-label="Sections"><div class="d-nav-in">${D.pages.map((p) => (p.sep ? `<span class="sep"></span>` : `<a href="${p.href}" class="${p.href === active ? "on" : ""}"${p.href === active ? ' aria-current="page"' : ""}>${p.label}</a>`)).join("")}<span class="fx-spot" aria-hidden="true"></span><span class="fx-amb" aria-hidden="true"></span></div></nav>
     </div></header>`;
   };
 
@@ -62,7 +62,15 @@
     const prev = list[i - 1], next = list[i + 1];
     return `<div class="d-pager">${prev ? `<a href="${prev.href}"><small>← Previous</small><b>${prev.label}</b></a>` : "<span></span>"}${next ? `<a class="next" href="${next.href}"><small>Next →</small><b>${next.label}</b></a>` : ""}</div>`;
   };
-  D.foot = () => `<footer class="d-foot"><div class="d-wrap row between wrap gap-12"><span>Jettigo · UI/UX design · Phases 1 &amp; 2 review · October 2026</span><a class="link" href="${APP}">Open the live app ↗</a></div></footer>`;
+  D.foot = () => `<footer class="d-foot"><div class="d-wrap">
+    <div class="d-foot-top">
+      <div class="stack gap-8">${J_BRAND.replace('class="brand"', 'class="brand lg"')}<span class="d-muted d-small">Private aviation, booked in minutes.</span></div>
+      <nav class="d-foot-nav" aria-label="Footer">${D.pages.filter((p) => !p.sep).map((p) => `<a href="${p.href}">${p.label}</a>`).join("")}</nav>
+      <a class="btn sm round" href="${APP}">Open the live app ↗</a>
+    </div>
+    <div class="d-foot-bot"><span>Jettigo · UI/UX design · Phases 1 &amp; 2 review · October 2026</span><span>Motion adapted from <a href="https://skiper-ui.com" target="_blank" rel="noopener">Skiper UI</a> and <a href="https://www.vengenceui.com" target="_blank" rel="noopener">Vengeance UI</a></span></div>
+    <div class="d-foot-mark" aria-hidden="true">Jetti<span>go</span></div>
+  </div></footer>`;
 
   const SIZES = { phone: [390, 844], tablet: [820, 1180], desktop: [1440, 900] };
   // A device frame holding the live app scaled to fit its width.

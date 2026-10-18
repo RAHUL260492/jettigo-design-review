@@ -7,13 +7,13 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=13"><link rel="stylesheet" href="deck/deck.css?v=13">
+  <link rel="stylesheet" href="app/app.css?v=15"><link rel="stylesheet" href="deck/deck.css?v=16"><link rel="stylesheet" href="deck/fx.css?v=16">
   <style>
     .d-side .flow { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px; border-radius: 12px; text-align: left; width: 100%; }
     .d-side .flow:hover { background: var(--slate-100); }
     .d-side .flow.on { background: var(--gold-100); color: var(--ink); box-shadow: inset 0 0 0 1px var(--gold-200); }
     .flow b { font-size: 14px; } .flow span { font-size: 12px; color: var(--text-2); }
-    @media (max-width: 999px) { .d-side .flow { min-width: 210px; } }
+    @media (max-width: 999px) { .d-side .flow { flex: none; width: 220px; white-space: normal; } }
   </style>
 </head>
 <body>
@@ -41,7 +41,8 @@
   </main>
   <div id="foot"></div>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=13"></script>
+  <script src="deck/deck.js?v=16"></script>
+  <script src="deck/fx.js?v=16"></script>
   <script>
     D.top("prototype.html");
     const FLOWS = [

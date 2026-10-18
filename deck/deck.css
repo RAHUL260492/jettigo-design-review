@@ -16,7 +16,7 @@ body { background: var(--ivory); color: var(--ink); }
 .d-nav a.on { background: var(--navy-900); color: #fff; }
 .d-nav .sep { width: 1px; background: var(--line); margin: 6px 6px; flex: none; }
 @media (max-width: 899px) {
-  .d-top-in { height: auto; flex-wrap: wrap; padding: 10px 0 0; gap: 8px 16px; }
+  .d-top-in { height: auto; flex-wrap: wrap; padding-top: 10px; gap: 8px 16px; }
   .d-top .tag { display: none; }
   .d-nav { width: 100%; margin: 0 -20px; padding: 0 20px 10px; width: calc(100% + 40px); }
 }
@@ -55,8 +55,8 @@ body { background: var(--ivory); color: var(--ink); }
 .d-cover { position: relative; overflow: hidden; background: var(--navy-950); color: #fff; isolation: isolate; }
 .d-cover::before { content: ""; position: absolute; inset: 0; z-index: -2; background: url(../assets/img/jet-tarmac.jpg) 70% 40% / cover; opacity: .55; }
 .d-cover::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(11,22,33,.98) 0%, rgba(11,22,33,.85) 45%, rgba(11,22,33,.25) 100%), linear-gradient(0deg, rgba(11,22,33,.9), transparent 40%); }
-.d-cover-in { display: grid; gap: 40px; padding: 72px 0 56px; align-items: center; }
-@media (min-width: 1000px) { .d-cover-in { grid-template-columns: 1.15fr 1fr; padding: 96px 0 80px; } }
+.d-cover-in { display: grid; gap: 40px; padding-top: 72px; padding-bottom: 56px; align-items: center; }
+@media (min-width: 1000px) { .d-cover-in { grid-template-columns: 1.15fr 1fr; padding-top: 96px; padding-bottom: 80px; } }
 .d-cover h1 { font-size: clamp(40px, 6.4vw, 76px); line-height: 1; letter-spacing: -0.04em; font-weight: 650; margin-top: 20px; }
 .d-cover h1 em { font-style: normal; color: var(--gold); }
 .d-cover p { color: rgba(255,255,255,.72); font-size: 18px; line-height: 1.6; max-width: 52ch; margin-top: 18px; }

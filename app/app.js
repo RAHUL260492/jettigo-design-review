@@ -29,7 +29,8 @@
       addr: "Hôtel de Paris Monte-Carlo, Monaco",
       travelers: {},
       jet: "g650",
-      amen: { wine: true, sound: false, masks: false },
+      // Included amenities are on by default and can be opted out of at no cost.
+      amen: { menu: true, wifi: true, linen: true, wine: true, sound: false, masks: false },
       car: "sclass",
       tier: "gold",
       verified: { 1: true },
@@ -46,6 +47,7 @@
   J.demoJets = J.jets;
   J.jet = () => J.jets[J.state.jet] || Object.values(J.jets)[0] || J.demoJets.g650;
   J.amenities = { wine: 350, sound: 250, masks: 75 };
+  J.included = ["menu", "wifi", "linen"];
   J.cars = {
     sclass: { name: "Mercedes-Benz S-Class", cls: "Luxury sedan", pax: 3, bags: 3, price: 450, img: "car-sclass" },
     rover: { name: "Range Rover Autobiography", cls: "Premium SUV", pax: 4, bags: 4, price: 520, img: "car-rover" },

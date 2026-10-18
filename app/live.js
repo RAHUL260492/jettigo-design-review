@@ -168,7 +168,9 @@
     J.jets = { ...J.jets, booked: { name: a.model, cls: CLS[a.category] || "", cat: CAT[a.category] || "mid", yom: a.yearOfManufacture, pax: a.seats, range: `${(a.rangeNm || 0).toLocaleString("en-US")} nm`, rate: (a.hourlyRateCents || 0) / 100, est: b.price.flightCents / 100, img: a.image || "jet-g650", time: fmtMin(b.flightMinutes) } };
     S.jet = "booked";
     J.fees = b.price.feesCents / 100;
-    S.amen = Object.fromEntries(Object.keys(J.amenities).map((k) => [k, b.amenities.some((x) => x.code === k)]));
+    // A fresh booking has no amenities saved yet: included ones start on, paid ones off.
+    const saved = b.amenities.map((x) => x.code);
+    S.amen = Object.fromEntries([...J.included, ...Object.keys(J.amenities)].map((k) => [k, saved.length ? saved.includes(k) : J.included.includes(k)]));
     S.verified = Object.fromEntries(b.travelers.map((t) => [t.position, t.verified]));
     if (b.ground) {
       S.car = b.ground.vehicle;
@@ -370,10 +372,10 @@
       on(root, "click", 'a[href="#/pay"]', async (el) => {
         busy(el, true);
         try {
-          const included = L.amenCatalog.filter((a) => a.priceCents === 0).map((a) => a.code);
-          const paid = Object.keys(S.amen).filter((k) => S.amen[k]);
+          const known = new Set(L.amenCatalog.map((a) => a.code));
+          const chosen = Object.keys(S.amen).filter((k) => S.amen[k] && known.has(k));
           const note = root.querySelector("textarea");
-          applyBooking(await api("PUT", `/v1/bookings/${S.booking.id}/amenities`, { codes: [...included, ...paid], specialRequests: note && note.value ? note.value : undefined }));
+          applyBooking(await api("PUT", `/v1/bookings/${S.booking.id}/amenities`, { codes: chosen, specialRequests: note && note.value ? note.value : undefined }));
           J.go("pay");
         } catch (err) {
           fail(err, el);
@@ -480,6 +482,7 @@
         const i = root.querySelector("#msg");
         send(i.value);
         i.value = "";
+        root.querySelector("#composer .send").disabled = true;
       });
       on(root, "click", "[data-q]", (el) => send(el.dataset.q));
     },

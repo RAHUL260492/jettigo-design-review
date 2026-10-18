@@ -643,6 +643,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .composer .input { border-radius: 999px; min-height: 48px; background: var(--white); }
 .composer .send { width: 48px; height: 48px; border-radius: 50%; background: var(--navy-900); color: #fff; display: grid; place-items: center; flex: none; }
 .composer .send svg { width: 20px; height: 20px; }
+.composer .send:disabled { opacity: .35; cursor: default; }
 .chips-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
 .chips-scroll::-webkit-scrollbar { display: none; }
 

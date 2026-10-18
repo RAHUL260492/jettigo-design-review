@@ -462,12 +462,12 @@
   /* =============== Amenities =============== */
   const amen = (key, img, title, desc, price) => {
     const included = !price;
-    const on = included || S.amen[key];
+    const on = S.amen[key] !== false;
     return `<div class="card amen">
       ${img.startsWith("ico:") ? `<span class="ico-tile">${ic(img.slice(4))}</span>` : ph(img, title)}
       <div><b>${title}</b><p class="small muted">${desc}</p></div>
       <div class="amen-foot">${included ? `<span class="pill green">Included</span>` : `<span class="pill">+${money(price)}</span>`}
-      <label class="switch" aria-label="${title}"><input type="checkbox" ${on ? "checked" : ""} ${included ? "disabled" : `data-amen="${key}"`}><span></span></label></div>
+      <label class="switch" aria-label="${title}${included ? " (included)" : ""}"><input type="checkbox" ${on ? "checked" : ""} data-amen="${key}"><span></span></label></div>
     </div>`;
   };
   J.screen("amenities", {
@@ -497,6 +497,8 @@
         c.addEventListener("change", () => {
           S.amen[c.dataset.amen] = c.checked;
           root.querySelector("#amen-t").textContent = money(J.amenTotal());
+          const title = c.closest(".amen").querySelector("b").textContent;
+          if (J.included.includes(c.dataset.amen)) J.toast(c.checked ? `${title} added. Included at no extra cost.` : `${title} removed. No change to your price.`, c.checked ? "circle-check" : "circle-minus");
         })
       );
     },
@@ -833,7 +835,7 @@
     lined: true,
     action: () => `<span class="avatar" style="width:40px;height:40px;position:relative">${ph("rahul", "Sophia")}<i style="position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#22a35a;border:2px solid var(--bg)"></i></span>`,
     cta: () => `<div class="stack gap-8 grow" style="--gap:10px;min-width:0"><div class="chips-scroll">${Object.keys(REPLIES).map((k) => `<button class="chip" data-q="${k}">${k}</button>`).join("")}</div>
-      <form class="composer" id="composer"><button type="button" class="iconbtn" aria-label="Attach" data-toast="Attachments open in the full build" data-icon="paperclip">${ic("paperclip")}</button><input class="input" id="msg" placeholder="Type a message…" autocomplete="off"><button class="send" aria-label="Send">${ic("send-horizontal")}</button></form></div>`,
+      <form class="composer" id="composer"><button type="button" class="iconbtn" aria-label="Attach" data-toast="Attachments open in the full build" data-icon="paperclip">${ic("paperclip")}</button><input class="input" id="msg" placeholder="Type a message…" autocomplete="off"><button class="send" aria-label="Send" disabled>${ic("send-horizontal")}</button></form></div>`,
     body: () => `<div class="split"><div class="chat" id="chat">
         <div class="center xs faint">Today</div>
         ${S.thread
@@ -861,11 +863,15 @@
           chat.lastElementChild.scrollIntoView({ behavior: "smooth", block: "end" });
         });
       };
+      // Send stays disabled until there is something to send.
+      const msgInput = root.querySelector("#msg"), sendBtn = root.querySelector("#composer .send");
+      msgInput.addEventListener("input", () => (sendBtn.disabled = !msgInput.value.trim()));
       root.querySelector("#composer").addEventListener("submit", (e) => {
         e.preventDefault();
         const i = root.querySelector("#msg");
         send(i.value);
         i.value = "";
+        root.querySelector("#composer .send").disabled = true;
       });
       root.querySelectorAll("[data-q]").forEach((c) => c.addEventListener("click", () => send(c.dataset.q)));
     },
@@ -1052,8 +1058,15 @@
         J.toast("Referral code copied", "copy");
       });
       root.querySelector('[data-act="share"]').addEventListener("click", () => {
-        if (navigator.share) navigator.share({ title: "Fly with Jettigo", text: "Use my code JETTIGO-1000-VIP for $1,000 off your first private flight." }).catch(() => {});
-        else J.toast("Share sheet opens on mobile", "share");
+        const code = (S.referral && S.referral.code) || "JETTIGO-1000-VIP";
+        const text = `Use my code ${code} for $1,000 off your first private flight with Jettigo.`;
+        const copy = () => {
+          navigator.clipboard?.writeText(text).catch(() => {});
+          J.toast("Invite copied. Paste it into any message.", "copy");
+        };
+        // Native share sheet where available; otherwise (or if it fails) copy the invite.
+        if (navigator.share) navigator.share({ title: "Fly with Jettigo", text }).catch((err) => err && err.name !== "AbortError" && copy());
+        else copy();
       });
     },
   });

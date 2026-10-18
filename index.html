@@ -8,7 +8,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=13"><link rel="stylesheet" href="deck/deck.css?v=13">
+  <link rel="stylesheet" href="app/app.css?v=15"><link rel="stylesheet" href="deck/deck.css?v=16"><link rel="stylesheet" href="deck/fx.css?v=16">
 </head>
 <body>
   <div id="d-top"></div>
@@ -31,11 +31,11 @@
 
   <main class="d-wrap">
     <section class="d-sec" style="padding-top:48px">
-      <div class="d-grid c4">
-        <div class="d-card"><div class="d-num">26</div><div class="d-muted mt-8">High-fidelity screens, each responsive across mobile, tablet and desktop</div></div>
-        <div class="d-card"><div class="d-num">4</div><div class="d-muted mt-8">Products in one platform: website, passenger app, corporate console, partner portal</div></div>
-        <div class="d-card"><div class="d-num">5</div><div class="d-muted mt-8">End-to-end user journeys mapped, from first visit to operator quoting</div></div>
-        <div class="d-card"><div class="d-num">1</div><div class="d-muted mt-8">Unified visual system replacing three explored directions</div></div>
+      <div class="d-stats">
+        <div><div class="d-num">26</div><p>High-fidelity screens, each responsive across mobile, tablet and desktop</p></div>
+        <div><div class="d-num">4</div><p>Products in one platform: website, passenger app, corporate console, partner portal</p></div>
+        <div><div class="d-num">5</div><p>End-to-end user journeys mapped, from first visit to operator quoting</p></div>
+        <div><div class="d-num">1</div><p>Unified visual system replacing three explored directions</p></div>
       </div>
     </section>
 
@@ -73,6 +73,11 @@
     </section>
 
     <section class="d-sec">
+      <div class="d-sec-h"><div><h2>26 screens, one system</h2><p class="mt-8">A pass across the platform. Every frame is the live prototype; hover to pause, click to open the screen.</p></div><a class="btn ghost sm round" href="screens.html">All screens</a></div>
+      <div id="mq"></div>
+    </section>
+
+    <section class="d-sec">
       <div class="d-sec-h"><div><h2>How to review</h2></div></div>
       <div class="d-grid c3">
         <div class="d-card stack gap-8"><i data-lucide="smartphone" class="gold"></i><b>On your phone</b><p class="d-muted d-small">Open the prototype on a phone to feel the real mobile experience. Everything is touch-ready.</p></div>
@@ -84,12 +89,14 @@
   <div id="foot"></div>
 
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=13"></script>
+  <script src="deck/deck.js?v=16"></script>
+  <script src="deck/fx.js?v=16"></script>
   <script>
     D.top("index.html");
     document.getElementById("cv-desk").innerHTML = D.device("desktop", "home", { interactive: false, lazy: false });
     document.getElementById("cv-phone").innerHTML = D.device("phone", "trip", { interactive: false, lazy: false });
     document.getElementById("foot").outerHTML = D.foot();
+    D.marquee(document.getElementById("mq"), ["home", "fleet", "cabin", "route", "jets", "compare", "pay", "confirmed", "trip", "tracker", "chauffeur", "corp", "quotes"]);
     D.fit(); D.icons();
   </script>
 </body>
