@@ -257,3 +257,34 @@ body { background: var(--ivory); color: var(--ink); }
 @media (max-width: 999px) { .d-band-art { display: none; } }
 .d-foot { margin-top: 0; }
 .d-ledger li.phase .d-status { letter-spacing: 0; text-transform: none; }
+
+/* Checklist */
+.d-progress { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.d-progress > div { padding: 0 20px; border-left: 1px solid var(--line); }
+.d-progress > div:first-child { padding-left: 0; border-left: 0; }
+.d-progress .d-num { font-size: 44px; color: var(--navy-900); }
+.d-progress p { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+@media (max-width: 599px) { .d-progress .d-num { font-size: 32px; } .d-progress > div { padding: 0 12px; } .d-progress p { font-size: 12px; } }
+.d-check { padding: 36px 0 8px; }
+.d-check-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.d-check-h h2 { font-size: 20px; font-weight: 650; letter-spacing: -0.015em; }
+.d-status.amber { background: var(--amber-100); color: var(--amber); }
+.d-check ol { list-style: none; margin: 0; padding: 0; }
+.d-check li { display: grid; grid-template-columns: 32px 1fr auto; gap: 16px; align-items: start; padding: 18px 0; border-top: 1px solid var(--line); }
+.d-check .mark { position: relative; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; cursor: pointer; color: #fff; background: #fff; box-shadow: inset 0 0 0 1.5px var(--slate-300); transition: background-color .2s, box-shadow .2s, transform .15s; }
+.d-check .mark:hover { box-shadow: inset 0 0 0 1.5px var(--gold); }
+.d-check .mark:active { transform: scale(.94); }
+.d-check .mark input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.d-check .mark svg { width: 15px; height: 15px; opacity: 0; transform: scale(.6); transition: opacity .2s, transform .25s cubic-bezier(.34,1.56,.64,1); pointer-events: none; }
+.d-check .mark:has(input:checked) { background: var(--green); box-shadow: inset 0 0 0 1.5px var(--green); }
+.d-check .mark:has(input:checked) svg { opacity: 1; transform: none; }
+.d-check .mark:has(input:focus-visible) { outline: 2px solid var(--gold); outline-offset: 2px; }
+.d-check .is-done b { color: var(--text-2); }
+.d-check-note { font-size: 13px; color: var(--text-3); margin: 14px 0 0; }
+.d-check-note button.link { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.d-check b { display: block; font-size: 16px; }
+.d-check p { font-size: 14px; color: var(--text-2); margin-top: 3px; max-width: 64ch; }
+.d-check .link { display: inline-block; margin-top: 8px; font-size: 13px; }
+.d-check .who { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--gold-100); color: var(--gold-700); white-space: nowrap; margin-top: 3px; }
+.d-check .who.done { background: var(--green-100); color: var(--green); }
+@media (max-width: 599px) { .d-check li { grid-template-columns: 28px 1fr; } .d-check .who { grid-column: 2; justify-self: start; margin-top: 0; } }

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checklist · Jettigo design review</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app/app.css?v=22"><link rel="stylesheet" href="deck/deck.css?v=22"><link rel="stylesheet" href="deck/fx.css?v=22">
+</head>
+<body>
+  <div id="d-top"></div>
+  <main class="d-wrap">
+    <header class="d-head">
+      <span class="eyebrow"><i></i>Project status</span>
+      <h1>Checklist</h1>
+      <p>What has been delivered so far, what is being reviewed now, and what comes next. Each finished item links to the work.</p>
+    </header>
+
+    <div class="d-progress" id="progress"></div>
+    <p class="d-check-note">Tick items as they are completed. Ticks are saved in this browser only, so each reviewer keeps their own. <button type="button" class="link" id="reset">Reset to the delivered status</button></p>
+    <div id="groups"></div>
+
+    <div id="pager"></div>
+  </main>
+  <div id="foot"></div>
+
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="deck/deck.js?v=22"></script>
+  <script src="deck/fx.js?v=22"></script>
+  <script>
+    D.top("checklist.html");
+    // done: delivered and reviewable. review: waiting on the review itself. next: scheduled for Phase 3.
+    const GROUPS = [
+      { t: "Phase 1 · Strategy & wireframing", status: "done", items: [
+        { done: true, t: "Project sitemap and information architecture", n: "Four products, 26 screens, with the pages planned for the build but outside the design scope marked.", href: "sitemap.html" },
+        { done: true, t: "Platform architecture", n: "Experiences, core services and third parties on one diagram.", href: "sitemap.html" },
+        { done: true, t: "User journeys", n: "Five journeys, step by step, each with the screen it uses and how the user feels along the way.", href: "journeys.html" },
+        { done: true, t: "Low-fidelity wireframes", n: "All 26 screens, numbered, with a note on what each one has to do.", href: "wireframes.html" },
+      ] },
+      { t: "Phase 2 · UI design & prototyping", status: "done", items: [
+        { done: true, t: "Visual direction", n: "Brand mark, colour palette, type scale, surfaces, interface elements, icons and photography.", href: "visual.html" },
+        { done: true, t: "High-fidelity UI screens", n: "26 screens, each designed for phone, tablet and desktop.", href: "screens.html" },
+        { done: true, t: "Interactive prototype", n: "A working model with real forms, maps, chat and countdowns. Tap any empty space to see what is clickable.", href: "prototype.html" },
+        { done: true, t: "This review site", n: "Everything above in one place, published online so it can be shared.", href: "index.html" },
+      ] },
+      { t: "Review of phases 1 and 2", status: "review", items: [
+        { done: false, who: "Jettigo", t: "Walk through the prototype on a phone", n: "The mobile version is the one most passengers will use, so it is the one to judge first.", href: "app/?hints=1", cta: "Open the app" },
+        { done: false, who: "Jettigo", t: "Send feedback by screen number", n: "Every screen is numbered 01 to 26 on the wireframe and UI pages. Quoting the number makes each comment easy to act on.", href: "screens.html", cta: "See the numbers" },
+        { done: false, who: "Design team", t: "Revise the screens from that feedback", n: "Starts as soon as the comments are in." },
+        { done: false, who: "Jettigo", t: "Sign off phases 1 and 2", n: "Confirms the designs that Phase 3 will be built from." },
+      ] },
+      { t: "Phase 3 · Developer handoff", status: "next", items: [
+        { done: false, who: "Design team", t: "Design system (UI kit)", n: "The master library of reusable components: buttons, type, inputs, cards, navigation and states." },
+        { done: false, who: "Design team", t: "Exported asset library", n: "Every SVG, image and icon, organised in folders and named for the build." },
+        { done: false, who: "Design team", t: "Developer files", n: "Annotated specs for spacing, behaviour and states on every screen, ready for coding." },
+        { done: false, who: "Jettigo + Design team", t: "Confirm the third-party vendors", n: "Payments, identity checks, flight data, maps, messaging and wallet passes are shown as examples on the architecture page. The final choices are settled together in Phase 3.", href: "sitemap.html", cta: "Architecture" },
+      ] },
+    ];
+
+    const STATUS = { done: ["Delivered", ""], review: ["In review", "amber"], next: ["Up next", "next"] };
+    const KEY = "jettigo-checklist";
+    const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+    const save = (o) => { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
+    let ticks = load();
+    GROUPS.forEach((g, gi) => g.items.forEach((it, ii) => { it.id = `g${gi}i${ii}`; }));
+    const all = GROUPS.flatMap((g) => g.items);
+    const isDone = (it) => it.id in ticks ? ticks[it.id] : it.done;
+
+    const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+    const progress = () => {
+      const doneN = all.filter(isDone).length;
+      const open = all.filter((i) => !isDone(i));
+      document.getElementById("progress").innerHTML = `
+        <div><div class="d-num">${doneN}</div><p>of ${all.length} items ticked</p></div>
+        <div><div class="d-num">${open.filter((i) => (i.who || "").startsWith("Jettigo")).length}</div><p>waiting on Jettigo</p></div>
+        <div><div class="d-num">${open.filter((i) => !(i.who || "").startsWith("Jettigo")).length}</div><p>with the design team</p></div>`;
+    };
+
+    document.getElementById("groups").innerHTML = GROUPS.map((g) => `
+      <section class="d-check">
+        <div class="d-check-h"><h2>${g.t}</h2><span class="d-status ${STATUS[g.status][1]}">${STATUS[g.status][0]}</span></div>
+        <ol>${g.items.map((i) => `
+          <li class="${isDone(i) ? "is-done" : "is-open"}" data-id="${i.id}">
+            <label class="mark"><input type="checkbox" ${isDone(i) ? "checked" : ""} aria-label="${i.t}">${CHECK}</label>
+            <div>
+              <b>${i.t}</b>
+              <p>${i.n}</p>
+              ${i.href ? `<a class="link" href="${i.href}">${i.cta || "View"} ↗</a>` : ""}
+            </div>
+            <span class="who${isDone(i) ? " done" : ""}">${isDone(i) ? "Done" : (i.who || "Design team")}</span>
+          </li>`).join("")}
+        </ol>
+      </section>`).join("");
+
+    document.getElementById("groups").addEventListener("change", (e) => {
+      const box = e.target; if (box.type !== "checkbox") return;
+      const li = box.closest("li"), it = all.find((x) => x.id === li.dataset.id);
+      ticks[it.id] = box.checked; save(ticks);
+      li.classList.toggle("is-done", box.checked); li.classList.toggle("is-open", !box.checked);
+      const who = li.querySelector(".who"); who.textContent = box.checked ? "Done" : (it.who || "Design team"); who.classList.toggle("done", box.checked);
+      progress();
+    });
+    document.getElementById("reset").addEventListener("click", () => {
+      ticks = {}; save(ticks);
+      all.forEach((it) => { const li = document.querySelector(`[data-id="${it.id}"]`); li.querySelector("input").checked = it.done; li.classList.toggle("is-done", it.done); li.classList.toggle("is-open", !it.done); const who = li.querySelector(".who"); who.textContent = it.done ? "Done" : (it.who || "Design team"); who.classList.toggle("done", it.done); });
+      progress();
+    });
+    progress();
+
+    document.getElementById("pager").outerHTML = D.pager("checklist.html");
+    document.getElementById("foot").outerHTML = D.foot();
+    D.icons();
+  </script>
+</body>
+</html>
