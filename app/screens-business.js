@@ -4,9 +4,9 @@
 
   /* =============== Corporate dashboard =============== */
   const TEAM = [
-    { n: "Sarah Lee", r: "Administrator", av: "av-sarah" },
-    { n: "John Kim", r: "Traveler", av: "av-john" },
-    { n: "Mark Davis", r: "Traveler", av: "av-mark" },
+    { n: "Sarah Lee", r: "Administrator", av: "rahul" },
+    { n: "John Kim", r: "Traveler", av: "rahul" },
+    { n: "Mark Davis", r: "Traveler", av: "rahul" },
   ];
   J.screen("corp", {
     title: "Jettigo Corporate",
@@ -37,7 +37,7 @@
       <div class="stack gap-24">
         <div class="card pad-lg"><div class="row between"><h2 class="h2">Travel activity</h2><a class="small link" href="#/invoices">All trips</a></div>
           <div class="list mt-8">
-            ${[["av-mark", "Mark Davis", "Upcoming", "12 Nov", "NYC → LAX", "Learjet 75"], ["av-sarah", "Sarah Lee", "Completed", "05 Oct", "LON → CDG", "Global 6000"], ["av-john", "John Kim", "Upcoming", "18 Nov", "DXB → HKG", "Challenger 350"]]
+            ${[["rahul", "Mark Davis", "Upcoming", "12 Nov", "NYC → LAX", "Learjet 75"], ["rahul", "Sarah Lee", "Completed", "05 Oct", "LON → CDG", "Global 6000"], ["rahul", "John Kim", "Upcoming", "18 Nov", "DXB → HKG", "Challenger 350"]]
               .map((r) => `<div class="person"><span class="avatar">${ph(r[0], r[1])}</span><div class="who"><span class="pill ${r[2] === "Upcoming" ? "blue" : "green"}" style="height:20px;font-size:11px">${r[2]}</span><b>${r[1]}</b></div><div class="right"><b class="small">${r[4]}</b><div class="xs faint">${r[3]} · ${r[5]}</div></div></div>`).join("")}
           </div>
         </div>

@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app/app.css?v=9"><link rel="stylesheet" href="deck/deck.css?v=9">
+  <link rel="stylesheet" href="app/app.css?v=10"><link rel="stylesheet" href="deck/deck.css?v=10">
 </head>
 <body>
   <div id="d-top"></div>
@@ -24,12 +24,12 @@
   <div id="foot"></div>
 
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
-  <script src="deck/deck.js?v=9"></script>
+  <script src="deck/deck.js?v=10"></script>
   <script>
     D.top("journeys.html");
     // mood: 1 (stressed) .. 5 (delighted)
     const J = [
-      { id: "book", who: "James, frequent private flyer", av: "av-mark", t: "Book a private jet", goal: "Get from London to Nice on Thursday with family, without phone calls or email chains.",
+      { id: "book", who: "James, frequent private flyer", av: "rahul", t: "Book a private jet", goal: "Get from London to Nice on Thursday with family, without phone calls or email chains.",
         steps: [
           ["Discover", "Lands on Jettigo", "Sees the promise and two clear actions.", "home", 3],
           ["Search", "Enters the trip", "Route, date, party size and bags in one form.", "route", 3],
@@ -41,7 +41,7 @@
           ["Celebrate", "Gets the pass", "Boarding pass, wallet and next steps.", "confirmed", 5] ],
         pains: ["Charter brokers quote by email over hours or days", "Prices hide positioning and fees", "Passport details are re-typed for every flight"],
         wins: ["Live quotes from verified operators in minutes", "All-in pricing shown before payment", "Passport scan with saved traveler profiles"] },
-      { id: "day", who: "James, on the day", av: "av-mark", t: "Day of travel", goal: "Arrive relaxed, board on time and land with a car waiting.",
+      { id: "day", who: "James, on the day", av: "rahul", t: "Day of travel", goal: "Arrive relaxed, board on time and land with a car waiting.",
         steps: [
           ["Prepare", "Opens the trip", "Countdown, terminal and readiness status.", "trip", 4],
           ["Travel", "Heads to the FBO", "One-tap directions to the private terminal.", "trip", 3],
@@ -51,7 +51,7 @@
           ["Ask", "Messages concierge", "Any request, answered in minutes.", "concierge", 5] ],
         pains: ["Unclear which terminal or gate to go to", "No visibility for people waiting on arrival", "Ground transport booked separately"],
         wins: ["FBO details and directions up front", "Shareable live tracking", "Car and concierge inside the trip"] },
-      { id: "corp", who: "Sarah, travel manager", av: "av-sarah", t: "Manage company travel", goal: "Book flights for the leadership team and keep spending and compliance under control.",
+      { id: "corp", who: "Sarah, travel manager", av: "rahul", t: "Manage company travel", goal: "Book flights for the leadership team and keep spending and compliance under control.",
         steps: [
           ["Sign in", "Uses company SSO", "No new password to manage.", "login", 4],
           ["Monitor", "Reviews the dashboard", "Credits, spend trend and team activity.", "corp", 4],
@@ -61,7 +61,7 @@
           ["Comply", "Downloads documents", "VAT, manifests and permits in one place.", "documents", 4] ],
         pains: ["Spend scattered across cards and brokers", "Chasing invoices and VAT certificates", "No control over who can book"],
         wins: ["Prepaid credit balance and analytics", "Exportable reports by department or traveler", "Roles: traveler, booker, admin"] },
-      { id: "onboard", who: "Riviera Air, charter operator", av: "av-john", t: "Become a Jettigo partner", goal: "List aircraft on Jettigo and start receiving qualified requests quickly.",
+      { id: "onboard", who: "Riviera Air, charter operator", av: "rahul", t: "Become a Jettigo partner", goal: "List aircraft on Jettigo and start receiving qualified requests quickly.",
         steps: [
           ["Discover", "Reads the partner pitch", "Clear value and the two partner roles.", "partner", 4],
           ["Verify", "Submits company details", "Licence, insurance and certificates.", "verify", 2],
@@ -70,7 +70,7 @@
           ["Go live", "Signs in securely", "Two-factor login to the portal.", "op-login", 4] ],
         pains: ["Long, paper-based broker onboarding", "Unclear status after applying", "Rates entered differently per broker"],
         wins: ["Guided three-step onboarding", "Transparent 48-hour review", "One rate card reused for every quote"] },
-      { id: "quote", who: "Riviera Air ops desk", av: "av-john", t: "Respond to a quote request", goal: "Win the right trips with fast, accurate responses.",
+      { id: "quote", who: "Riviera Air ops desk", av: "rahul", t: "Respond to a quote request", goal: "Win the right trips with fast, accurate responses.",
         steps: [
           ["Alert", "Gets a new request", "Notification with a response timer.", "quotes", 3],
           ["Assess", "Reviews the trip", "Route, party, baggage and aircraft fit.", "quotes", 4],

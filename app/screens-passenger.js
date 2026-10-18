@@ -601,7 +601,7 @@
         </div>
         <div class="stack gap-16">
           <div class="glass-card" style="padding:16px"><span class="label">Your crew</span>
-            <div class="g2 gap-12 mt-16" style="grid-template-columns:1fr 1fr"><div class="person"><span class="avatar lg">${ph("crew-captain", "Captain David Lee")}</span><div class="who"><b>David Lee</b><span>Captain</span></div></div><div class="person"><span class="avatar lg">${ph("crew-fa", "Sarah Kim")}</span><div class="who"><b>Sarah Kim</b><span>Lead flight attendant</span></div></div></div>
+            <div class="g2 gap-12 mt-16" style="grid-template-columns:1fr 1fr"><div class="person"><span class="avatar lg">${ph("rahul", "Captain David Lee")}</span><div class="who"><b>David Lee</b><span>Captain</span></div></div><div class="person"><span class="avatar lg">${ph("rahul", "Sarah Kim")}</span><div class="who"><b>Sarah Kim</b><span>Lead flight attendant</span></div></div></div>
           </div>
           <div class="glass-card" style="padding:16px"><span class="label">Aircraft</span><div class="row gap-12 mt-16">${ph(J.jets[S.jet].img, "", "", "width:96px;height:60px;border-radius:8px;flex:none")}<div><b>${J.jets[S.jet].name}</b><div class="small muted">Tail G-JTGO · ${S.pax} passengers</div></div></div></div>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr">
@@ -768,7 +768,7 @@
       </svg></div>
       <div class="tracker-panel stack gap-16">
         <div class="glass-card stack gap-16" style="padding:18px">
-          <div class="row gap-16"><span class="avatar xl">${ph("chauffeur", "Alexander")}</span><div class="stack gap-8" style="--gap:4px"><b style="font-size:22px">Alexander</b><span class="row gap-8 small">${ic("star", "gold")}<b>5.0</b><span class="muted">(128 reviews)</span></span><span class="small muted">12 years experience</span></div></div>
+          <div class="row gap-16"><span class="avatar xl">${ph("rahul", "Alexander")}</span><div class="stack gap-8" style="--gap:4px"><b style="font-size:22px">Alexander</b><span class="row gap-8 small">${ic("star", "gold")}<b>5.0</b><span class="muted">(128 reviews)</span></span><span class="small muted">12 years experience</span></div></div>
           <div class="small muted">${J.cars[S.car].name} · Plate <b style="color:var(--text)">JTG-007</b></div>
           <div class="btn light block lg" style="pointer-events:none">${ic("clock-3")} Arriving in <span id="mins">8</span> minutes</div>
           <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn ghost" href="#/concierge">${ic("mail")} Message</a><button class="btn ghost" data-toast="Calling Alexander…" data-icon="phone">${ic("phone")} Call</button></div>
@@ -801,7 +801,7 @@
     nav: "concierge",
     back: "trip",
     lined: true,
-    action: () => `<span class="avatar" style="width:40px;height:40px;position:relative">${ph("concierge", "Sophia")}<i style="position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#22a35a;border:2px solid var(--bg)"></i></span>`,
+    action: () => `<span class="avatar" style="width:40px;height:40px;position:relative">${ph("rahul", "Sophia")}<i style="position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#22a35a;border:2px solid var(--bg)"></i></span>`,
     cta: () => `<div class="stack gap-8 grow" style="--gap:10px;min-width:0"><div class="chips-scroll">${Object.keys(REPLIES).map((k) => `<button class="chip" data-q="${k}">${k}</button>`).join("")}</div>
       <form class="composer" id="composer"><button type="button" class="iconbtn" aria-label="Attach" data-toast="Attachments open in the full build" data-icon="paperclip">${ic("paperclip")}</button><input class="input" id="msg" placeholder="Type a message…" autocomplete="off"><button class="send" aria-label="Send">${ic("send-horizontal")}</button></form></div>`,
     body: () => `<div class="split"><div class="chat" id="chat">
@@ -998,7 +998,7 @@
     nav: "membership",
     back: "membership",
     body: () => `<div class="split even">
-      <div class="banner-img referral-banner">${ph("referral", "Friends toasting on a private jet", "", "aspect-ratio:4/3")}</div>
+      <div class="banner-img referral-banner">${ph("jet-clouds", "Private jet above the clouds", "", "aspect-ratio:4/3")}</div>
       <div class="stack gap-16">
         <h1 class="display" style="font-size:clamp(34px,5vw,52px)">Share the sky</h1>
         <p class="body-lg muted">Refer a friend and you both receive $1,000 in flight credit on their first booking.</p>

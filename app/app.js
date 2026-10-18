@@ -88,9 +88,9 @@
     const items = NAVS[shell];
     const right =
       shell === "passenger"
-        ? `<a class="btn ghost sm round" href="#/referral">${J.ic("gift")} Refer &amp; earn</a><a href="#/membership" class="avatar" style="width:38px;height:38px">${J.ph("av-mark", "Your profile")}</a>`
+        ? `<a class="btn ghost sm round" href="#/referral">${J.ic("gift")} Refer &amp; earn</a><a href="#/membership" class="avatar" style="width:38px;height:38px">${J.ph("rahul", "Your profile")}</a>`
         : shell === "corporate"
-        ? `<a class="btn sm round" href="#/route">${J.ic("plus")} New booking</a><span class="avatar" style="width:38px;height:38px">${J.ph("av-sarah", "Sarah Lee")}</span>`
+        ? `<a class="btn sm round" href="#/route">${J.ic("plus")} New booking</a><span class="avatar" style="width:38px;height:38px">${J.ph("rahul", "Sarah Lee")}</span>`
         : `<span class="pill green">${J.ic("badge-check")} Verified operator</span>`;
     return `<header class="desknav"><div class="desknav-in">
       <a href="#/${shell === "partner" ? "quotes" : shell === "corporate" ? "corp" : "home"}">${J.brand("", SUFFIX[shell] || "")}</a>
