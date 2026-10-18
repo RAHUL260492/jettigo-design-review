@@ -17,6 +17,13 @@
   };
   J.when = when; J.legs = legs;
   const paxText = () => `${S.pax} passenger${S.pax > 1 ? "s" : ""}`;
+  /** Notifications list in a sheet; items: [icon, title, detail, unread]. */
+  J.notifications = (title, items) =>
+    J.sheet({
+      title,
+      body: `<div class="list">${items.map(([icon, t, d, unread]) => `<div class="notif ${unread ? "unread" : ""}"><span class="ico">${ic(icon)}</span><div><b>${J.esc(t)}</b><p class="small muted">${J.esc(d)}</p></div></div>`).join("")}</div>
+        <button type="button" class="btn ghost block" data-sheet-close>Mark all as read</button>`,
+    });
   const tripLine = () => {
     if (S.tripType === "return" && S.ret) return `${when()} – ${J.dow(S.ret)} ${S.ret.d} ${J.MONTHS[S.ret.m]} · Return · ${paxText()}`;
     if (S.tripType === "multi") return `${1 + S.legs.length} flights from ${when()} · ${paxText()}`;
@@ -536,8 +543,8 @@
     const t = S.travelers[n] || (done && !(J.live && J.live.on) ? fixture(n) : {});
     const v = (f) => (t[f] ? `value="${J.esc(t[f])}"` : "");
     return `<div class="card pax-card stack gap-12 ${done ? "done" : ""}" data-pax="${n}">
-      <span class="ok">${ic("badge-check")}</span>
-      <div><b>Passenger ${n}${n === 1 ? " · Lead traveler" : ""}</b><div class="xs faint">${done ? "Verified" : "Details required"}</div></div>
+      <div class="row between top"><div><b>Passenger ${n}${n === 1 ? " · Lead traveler" : ""}</b><div class="xs faint">${done ? "Verified" : "Details required"}</div></div>
+        <div class="row gap-8">${done ? `<span class="okb" title="Verified">${ic("badge-check")}</span>` : ""}${n > 1 ? `<button type="button" class="iconbtn" data-act="rm-pax" data-n="${n}" aria-label="Remove passenger ${n}" style="width:36px;height:36px;margin:-6px -6px 0 0">${ic("x")}</button>` : ""}</div></div>
       <input class="input" data-f="name" aria-label="Passenger ${n} full legal name" placeholder="Full legal name (as on passport)" ${v("name")}>
       <input class="input" data-f="passport" aria-label="Passenger ${n} passport number" placeholder="Passport number" ${v("passport")}>
       <div class="g2 gap-8" style="grid-template-columns:1fr 1fr"><input class="input" data-f="nat" aria-label="Passenger ${n} nationality" placeholder="Nationality" ${v("nat")}><input class="input" data-f="dob" aria-label="Passenger ${n} date of birth" placeholder="Date of birth" ${v("dob")}></div>
@@ -545,6 +552,10 @@
       ${n === 1 ? `<button class="scan" data-act="selfie">${ic("scan-face")} Identity check: take a selfie</button>` : ""}
     </div>`;
   };
+  const paxList = () => `<div class="row between mt-24"><h2 class="h2">${S.pax} traveler${S.pax > 1 ? "s" : ""}</h2><span class="pill green desk-only" id="vpill"></span></div>
+      <div class="g2 mt-16">${Array.from({ length: S.pax }, (_, i) => paxCard(i + 1)).join("")}
+        <button type="button" class="card add-pax" data-act="add-pax">${ic("user-plus")}<b>Add passenger</b><span class="small muted">Up to ${Math.min(19, J.jet().pax)} seats on the ${J.esc(J.jet().name)}</span></button>
+      </div>`;
   J.screen("travelers", {
     title: "Traveler details",
     doc: "Booking: traveler manifest & KYC",
@@ -555,8 +566,7 @@
     cta: () => `<div class="grow mob-only"><div class="xs faint">Verified</div><b id="vcount"></b></div><a class="btn lg" href="#/amenities" style="flex:1.4">Continue</a>`,
     body: () => `${progress(2)}
       <div class="card row gap-12 mt-16" style="background:var(--surface-2)">${ic("info", "gold")}<p class="small muted">Names must match passports exactly. Scanning a passport fills the details and runs the required checks.</p></div>
-      <div class="row between mt-24"><h2 class="h2">${S.pax} travelers</h2><span class="pill green desk-only" id="vpill"></span></div>
-      <div class="g2 mt-16">${Array.from({ length: S.pax }, (_, i) => paxCard(i + 1)).join("")}</div>`,
+      <div id="paxlist">${paxList()}</div>`,
     init(root) {
       const count = () => {
         const n = Object.keys(S.verified).filter((k) => S.verified[k] && +k <= S.pax).length;
@@ -566,6 +576,45 @@
         if (p) p.innerHTML = `${t}`;
       };
       count();
+      const relist = () => {
+        root.querySelector("#paxlist").innerHTML = paxList();
+        J.icons(root.querySelector("#paxlist"));
+        count();
+      };
+      // Live bookings are priced for a fixed party size, so changes go back through search.
+      const liveResize = (n) =>
+        J.sheet({
+          title: "Change number of travelers",
+          body: `<p class="muted">Your price is quoted for ${S.pax} traveler${S.pax > 1 ? "s" : ""}. To fly with ${n}, search again and we'll re-quote available jets.</p>
+            <a class="btn block lg" href="#/route" data-resize="${n}">Search for ${n} traveler${n > 1 ? "s" : ""}</a>`,
+          onOpen: (panel) => panel.querySelector("[data-resize]").addEventListener("click", () => { S.pax = n; S.quotes = null; S.booking = null; }),
+        });
+      root.addEventListener("click", (e) => {
+        if (e.target.closest('[data-act="add-pax"]')) {
+          const seats = Math.min(19, J.jet().pax);
+          if (S.pax >= seats) return J.toast(`The ${J.jet().name} seats ${seats}. Choose a larger jet to add more travelers.`, "info");
+          if (J.live && J.live.on) return liveResize(S.pax + 1);
+          S.pax += 1;
+          relist();
+          root.querySelector(`[data-pax="${S.pax}"] input`).focus();
+          return;
+        }
+        const rm = e.target.closest('[data-act="rm-pax"]');
+        if (rm) {
+          if (J.live && J.live.on) return liveResize(S.pax - 1);
+          const n = +rm.dataset.n;
+          // Shift later travelers up one place so their details stay attached to them.
+          for (let k = n; k < S.pax; k++) {
+            S.travelers[k] = S.travelers[k + 1];
+            S.verified[k] = S.verified[k + 1];
+          }
+          delete S.travelers[S.pax];
+          delete S.verified[S.pax];
+          S.pax -= 1;
+          relist();
+          J.toast(`Passenger ${n} removed`, "user-minus");
+        }
+      });
       // Keep typed details; editing a verified traveler requires a rescan.
       root.addEventListener("input", (e) => {
         const f = e.target.dataset.f;
@@ -576,6 +625,7 @@
         if (S.verified[n]) {
           S.verified[n] = false;
           card.classList.remove("done");
+          card.querySelector(".okb")?.remove();
           card.querySelector(".xs.faint").textContent = "Rescan passport to verify";
           count();
         }
@@ -709,11 +759,32 @@
   });
 
   /* =============== Confirmation =============== */
+  /** Standalone SVG of the boarding pass for download. */
+  function passSvg() {
+    const x = (t) => J.esc(t);
+    const qr = J.qr(742).replace("<svg ", '<svg x="110" y="96" width="180" height="180" ').replace(/var\(--surface\)/g, "#fff");
+    const rows = [["Booking ref", S.ref], ["Lead passenger", S.lead], ["From", J.city(S.origin)], ["To", J.city(S.dest)], ["Date", `${when()} ${S.date.y}`], ["Departs", S.time]];
+    if (S.tripType === "return" && S.ret) rows.push(["Return", `${J.dow(S.ret)} ${S.ret.d} ${J.MONTHS[S.ret.m]} · ${S.retTime}`]);
+    if (S.tripType === "multi") rows.push(["Flights", `${J.legCount()} · ${legs()}`]);
+    const body = rows.map(([k, v], i) => `<text x="32" y="${340 + i * 46}" font-size="12" fill="#64748b">${x(k)}</text><text x="32" y="${360 + i * 46}" font-size="16" font-weight="600" fill="#0b1c30">${x(v)}</text>`).join("");
+    const h = 340 + rows.length * 46 + 30;
+    return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="400" height="${h}" viewBox="0 0 400 ${h}" font-family="Inter, Helvetica, Arial, sans-serif">
+      <rect width="400" height="${h}" rx="20" fill="#fdfcfb"/><rect width="400" height="72" rx="20" fill="#202a36"/><rect y="52" width="400" height="20" fill="#202a36"/>
+      <text x="32" y="45" font-size="22" font-weight="700" fill="#fff">Jetting<tspan fill="#b89e67">o</tspan></text><text x="368" y="45" font-size="13" fill="#e9dcbc" text-anchor="end">Boarding pass</text>
+      <g fill="#0b1c30">${qr}</g><line x1="24" y1="304" x2="376" y2="304" stroke="#cbd5e1" stroke-dasharray="6 6"/>${body}</svg>`;
+  }
+
   J.screen("confirmed", {
     doc: "Booking confirmed",
     group: "Booking",
     shell: "passenger",
     nav: "trip",
+    init(root) {
+      root.querySelector('[data-act="pass"]').addEventListener("click", () => {
+        J.download(`jettingo-boarding-pass-${S.ref}.svg`, passSvg(), "image/svg+xml");
+        J.toast("Boarding pass downloaded", "download");
+      });
+    },
     body: () => {
       const j = J.jet();
       return `<div class="split even" style="padding-top:24px">
@@ -732,7 +803,7 @@
               ${S.tripType === "return" && S.ret ? `<div><div class="k">Return</div><div class="v">${J.dow(S.ret)} ${S.ret.d} ${J.MONTHS[S.ret.m]}</div></div><div><div class="k">Return departs</div><div class="v">${S.retTime}</div></div>` : ""}
             </div>
           </div>
-          <div class="stack gap-12"><button class="btn block lg" style="background:#000" data-toast="Pass added to Apple Wallet" data-icon="wallet">${ic("wallet")} Add to Apple Wallet</button><a class="btn ghost block lg" href="#/trip">Go to trip dashboard</a></div>
+          <div class="stack gap-12"><button class="btn block lg" style="background:#000" data-act="pass">${ic("download")} Download boarding pass</button><a class="btn ghost block lg" href="#/trip">Go to trip dashboard</a></div>
         </div>
         <div class="stack gap-12">
           ${J.legCount() > 1 ? `<div class="card stack gap-8"><span class="label">Itinerary · ${J.legCount()} flights</span><div class="list">${J.tripLegs().map((l, i) => `<div class="row between"><div><b>${J.code(l.from)} → ${J.code(l.to)}</b><div class="xs faint">Flight ${i + 1}</div></div><span class="small">${J.dow(l.date)} ${l.date.d} ${J.MONTHS[l.date.m]}, ${l.time}</span></div>`).join("")}</div></div>` : ""}
@@ -764,7 +835,7 @@
     nav: "trip",
     dark: true,
     back: "confirmed",
-    action: () => `<button class="iconbtn" aria-label="Notifications" data-toast="Boarding opens at 09:40" data-icon="bell">${ic("bell")}</button>`,
+    action: () => `<button class="iconbtn" aria-label="Notifications" data-act="notifs">${ic("bell")}<span class="badge"></span></button>`,
     body: () => `<div class="center stack gap-8" style="padding:12px 0 20px"><span class="label">Departing in</span><div class="display tnum" id="cd">${J.countdown(S.live ? S.live.countdownSeconds : 2 * 3600 + 15 * 60)}</div><div class="muted">Scheduled ${S.time} · ${when()}</div></div>
       <div class="split">
         <div class="stack gap-16">
@@ -786,6 +857,15 @@
         </div>
       </div>`,
     init(root) {
+      root.querySelector('[data-act="notifs"]').addEventListener("click", (e) => {
+        e.currentTarget.querySelector(".badge")?.remove();
+        J.notifications("Trip updates", [
+          ["plane-takeoff", "Boarding opens 40 minutes before departure", `${J.esc(S.ref)} · ${legs()} · departs ${S.time}`, true],
+          ["user-round-check", "Your crew is confirmed", "Captain and lead flight attendant assigned", true],
+          ["utensils", "Catering confirmed", "Your amenity selections are with the crew", false],
+          ["car-front", "Ground transport", "Book a chauffeur for your arrival from the trip screen", false],
+        ]);
+      });
       let left = S.live ? S.live.countdownSeconds : 2 * 3600 + 15 * 60;
       const el = root.querySelector("#cd");
       J.every(1000, () => {
@@ -947,7 +1027,7 @@
           <div class="row gap-16"><span class="avatar xl">${ph("rahul", S.chauffeur.name)}</span><div class="stack gap-8" style="--gap:4px"><b style="font-size:22px">${J.esc(S.chauffeur.name)}</b><span class="row gap-8 small">${ic("star", "gold")}<b>5.0</b><span class="muted">(128 reviews)</span></span><span class="small muted">12 years experience</span></div></div>
           <div class="small muted">${J.cars[S.car].name} · Plate <b style="color:var(--text)">${J.esc(S.chauffeur.plate)}</b></div>
           <div class="btn light block lg" style="pointer-events:none">${ic("clock-3")} Arriving in <span id="mins">8</span> minutes</div>
-          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn ghost" href="#/concierge">${ic("mail")} Message</a><button class="btn ghost" data-toast="Calling your chauffeur…" data-icon="phone">${ic("phone")} Call</button></div>
+          <div class="g2 gap-12" style="grid-template-columns:1fr 1fr"><a class="btn ghost" href="#/concierge">${ic("mail")} Message</a><a class="btn ghost" href="tel:+33493000000" aria-label="Call your chauffeur">${ic("phone")} Call</a></div>
         </div>
         <div class="glass-card list" style="padding:4px 18px"><div class="row gap-12">${ic("map-pin", "gold")}<div><b>Planeside pickup</b><p class="small muted">Stand A12 · Meet &amp; greet</p></div></div><div class="row gap-12">${ic("flag", "gold")}<div><b>${J.esc(S.addr || "Destination to confirm")}</b><p class="small muted">ETA 12:35</p></div></div></div>
       </div>
@@ -979,7 +1059,7 @@
     lined: true,
     action: () => `<span class="avatar" style="width:40px;height:40px;position:relative">${ph("rahul", "Sophia")}<i style="position:absolute;right:0;bottom:0;width:11px;height:11px;border-radius:50%;background:#22a35a;border:2px solid var(--bg)"></i></span>`,
     cta: () => `<div class="stack gap-8 grow" style="--gap:10px;min-width:0"><div class="chips-scroll">${Object.keys(REPLIES).map((k) => `<button class="chip" data-q="${k}">${k}</button>`).join("")}</div>
-      <form class="composer" id="composer"><button type="button" class="iconbtn" aria-label="Attach" data-toast="Attachments open in the full build" data-icon="paperclip">${ic("paperclip")}</button><input class="input" id="msg" placeholder="Type a message…" autocomplete="off"><button class="send" aria-label="Send" disabled>${ic("send-horizontal")}</button></form></div>`,
+      <form class="composer" id="composer"><label class="iconbtn" aria-label="Attach a file" style="cursor:pointer">${ic("paperclip")}<input type="file" id="attach" hidden accept="image/*,.pdf,.doc,.docx"></label><input class="input" id="msg" placeholder="Type a message…" autocomplete="off"><button class="send" aria-label="Send" disabled>${ic("send-horizontal")}</button></form></div>`,
     body: () => `<div class="split"><div class="chat" id="chat">
         <div class="center xs faint">Today</div>
         ${S.thread
@@ -1018,6 +1098,18 @@
         root.querySelector("#composer .send").disabled = true;
       });
       root.querySelectorAll("[data-q]").forEach((c) => c.addEventListener("click", () => send(c.dataset.q)));
+      root.querySelector("#attach").addEventListener("change", (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const kb = f.size < 1024 * 1024 ? `${Math.max(1, Math.round(f.size / 1024))} KB` : `${(f.size / 1048576).toFixed(1)} MB`;
+        chat.insertAdjacentHTML("beforeend", `<div class="msg me"><span class="row gap-8">${ic("paperclip")} ${J.esc(f.name)}</span><span class="ts">${kb} · ${t()}</span></div>`);
+        J.icons(chat);
+        J.later(900, () => {
+          chat.insertAdjacentHTML("beforeend", `<div class="msg them">Thank you, I've received ${J.esc(f.name)}. I'll take care of it.<span class="ts">${t()}</span></div>`);
+          chat.lastElementChild.scrollIntoView({ behavior: "smooth", block: "end" });
+        });
+        e.target.value = "";
+      });
     },
   });
 
@@ -1032,7 +1124,7 @@
     shell: "passenger",
     nav: "fleet",
     back: "home",
-    action: () => `<button class="iconbtn" aria-label="Filters" data-toast="Filters: size, range, amenities" data-icon="sliders-horizontal">${ic("sliders-horizontal")}</button>`,
+    action: () => `<button class="iconbtn" aria-label="Filter aircraft" data-act="filters">${ic("sliders-horizontal")}${S.fleetFilter && (S.fleetFilter.cat !== "all" || S.fleetFilter.seats > 1) ? '<span class="badge"></span>' : ""}</button>`,
     body: () => `<div class="carousel" id="fc">${FLEET.map((k, i) => {
         const j = J.demoJets[k];
         return `<button class="card flush hover ${k === fj() ? "sel" : ""}" data-k="${k}" style="text-align:left">${ph(j.img, j.name, "", "aspect-ratio:16/9")}<div style="padding:14px 16px"><b style="font-size:17px">${J.esc(j.name)}</b><div class="small muted">${j.cls}</div></div></button>`;
@@ -1055,6 +1147,67 @@
         </div>
       </div>`,
     init(root) {
+      // Filters: aircraft size and minimum seats.
+      const CATS = [["all", "All"], ["mid", "Midsize"], ["heavy", "Heavy"], ["ulr", "Ultra-long range"]];
+      const f = (S.fleetFilter = S.fleetFilter || { cat: "all", seats: 1 });
+      const apply = () => {
+        let shown = 0;
+        root.querySelectorAll("#fc [data-k]").forEach((card) => {
+          const j = J.demoJets[card.dataset.k];
+          const ok = (f.cat === "all" || j.cat === f.cat) && j.pax >= f.seats;
+          card.hidden = !ok;
+          shown += ok;
+        });
+        let note = root.querySelector("#fleet-note");
+        if (!note) {
+          root.querySelector("#fc").insertAdjacentHTML("beforebegin", `<div class="row between" id="fleet-note" style="margin-bottom:8px"></div>`);
+          note = root.querySelector("#fleet-note");
+        }
+        const active = f.cat !== "all" || f.seats > 1;
+        note.hidden = !active;
+        note.innerHTML = active ? `<span class="small muted">Showing ${shown} of ${FLEET.length} aircraft</span><button type="button" class="small link" data-act="clear-filters">Clear filters</button>` : "";
+        const badge = root.querySelector('[data-act="filters"] .badge');
+        if (active && !badge) root.querySelector('[data-act="filters"]').insertAdjacentHTML("beforeend", '<span class="badge"></span>');
+        if (!active && badge) badge.remove();
+        root.querySelector("#fc").dispatchEvent(new Event("scroll"));
+      };
+      apply();
+      root.addEventListener("click", (e) => {
+        if (e.target.closest('[data-act="clear-filters"]')) { f.cat = "all"; f.seats = 1; return apply(); }
+        if (!e.target.closest('[data-act="filters"]')) return;
+        const draft = { ...f };
+        J.sheet({
+          title: "Filter aircraft",
+          body: `<div class="stack gap-8"><span class="small muted">Aircraft size</span><div class="row wrap gap-8" id="fcat">${CATS.map(([v, l]) => `<button type="button" class="chip" data-v="${v}" aria-pressed="${draft.cat === v}" style="${draft.cat === v ? "background:var(--navy-900);color:#fff;border-color:var(--navy-900)" : ""}">${l}</button>`).join("")}</div></div>
+            <div class="inputbox">${ic("users")}<div class="grow"><div class="lbl">Minimum seats</div><div class="val">Passengers</div></div><div class="stepper" data-min="1" data-max="19" id="fseats"><button type="button" data-d="-" aria-label="Fewer">${ic("minus")}</button><output>${draft.seats}</output><button type="button" data-d="+" aria-label="More">${ic("plus")}</button></div></div>
+            <div class="row gap-8"><button type="button" class="btn ghost" data-v="reset">Reset</button><button type="button" class="btn grow" data-v="apply">Show aircraft</button></div>`,
+          onOpen(panel) {
+            panel.addEventListener("click", (ev) => {
+              const chip = ev.target.closest("#fcat .chip");
+              if (chip) {
+                draft.cat = chip.dataset.v;
+                panel.querySelectorAll("#fcat .chip").forEach((c) => {
+                  const on = c === chip;
+                  c.setAttribute("aria-pressed", on);
+                  c.style.cssText = on ? "background:var(--navy-900);color:#fff;border-color:var(--navy-900)" : "";
+                });
+              }
+              if (ev.target.closest('[data-v="reset"]')) {
+                draft.cat = "all";
+                draft.seats = 1;
+                panel.querySelector("#fseats output").textContent = 1;
+                panel.querySelectorAll("#fcat .chip").forEach((c, i) => (c.style.cssText = i ? "" : "background:var(--navy-900);color:#fff;border-color:var(--navy-900)"));
+              }
+              if (ev.target.closest('[data-v="apply"]')) {
+                Object.assign(f, draft);
+                J.closeSheet();
+                apply();
+              }
+            });
+            panel.querySelector("#fseats").addEventListener("step", (ev) => (draft.seats = ev.detail));
+          },
+        });
+      });
       const selected = root.querySelector("#fc .sel");
       if (selected) root.querySelector("#fc").scrollLeft = selected.offsetLeft - root.querySelector("#fc").offsetLeft;
       root.querySelectorAll("[data-k]").forEach((b) =>

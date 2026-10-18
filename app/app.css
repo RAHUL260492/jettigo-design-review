@@ -364,6 +364,31 @@ h1, h2, h3, h4, p { margin: 0; }
 .progress .st.on .dot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
 .progress .st.on, .progress .st.done { color: var(--text); font-weight: 600; }
 
+/* Sheet (bottom sheet on phones, dialog on larger screens) */
+.sheet { position: fixed; inset: 0; z-index: 95; background: rgba(11,22,33,0.45); display: flex; align-items: flex-end; justify-content: center; opacity: 0; transition: opacity .2s ease; }
+.sheet.open { opacity: 1; }
+.sheet-panel { width: 100%; max-height: 86vh; overflow: auto; background: var(--ivory); color: var(--ink); border-radius: 20px 20px 0 0; padding: 18px 18px max(20px, env(safe-area-inset-bottom)); transform: translateY(24px); transition: transform .28s cubic-bezier(.2,.8,.2,1); box-shadow: var(--shadow-lg); }
+.sheet.open .sheet-panel { transform: none; }
+.sheet-head { margin-bottom: 12px; }
+.sheet-body { display: flex; flex-direction: column; gap: 14px; }
+@media (min-width: 768px) {
+  .sheet { align-items: center; padding: 24px; }
+  .sheet-panel { width: min(480px, 100%); border-radius: 18px; }
+}
+.notif { display: flex; gap: 12px; align-items: flex-start; }
+.notif .ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--gold-100); color: var(--gold-700); flex: none; }
+.notif .ico svg { width: 18px; height: 18px; }
+.notif.unread b::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--gold); vertical-align: middle; }
+.iconbtn .badge { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 2px var(--bg); }
+.iconbtn { position: relative; }
+.steps-v { display: flex; flex-direction: column; gap: 14px; }
+.steps-v .s { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; }
+.steps-v .s i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); display: grid; place-items: center; }
+.steps-v .s.done i { background: var(--navy-900); border-color: var(--navy-900); }
+.steps-v .s.done i::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+.steps-v .s.now i { border-color: var(--gold); box-shadow: 0 0 0 4px var(--gold-100); }
+html.wire .sheet-panel { background: #fff !important; border: 1px dashed #999; }
+
 /* Toast */
 .toast {
   position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 28px); z-index: 90;
@@ -567,8 +592,11 @@ h1, h2, h3, h4, p { margin: 0; }
 
 /* Passenger (KYC) cards */
 .pax-card { position: relative; }
-.pax-card .ok { position: absolute; top: 14px; right: 14px; color: var(--green); display: none; }
-.pax-card.done .ok { display: block; }
+.pax-card .okb { color: var(--green); display: grid; place-items: center; }
+.pax-card .okb svg { width: 22px; height: 22px; }
+.add-pax { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 180px; border: 1.5px dashed var(--line-2); background: transparent; color: var(--text); text-align: center; }
+.add-pax:hover { border-color: var(--navy-900); background: var(--surface); }
+.add-pax svg { width: 26px; height: 26px; color: var(--gold-600); }
 .pax-card.done { border-color: color-mix(in srgb, var(--green) 45%, var(--line)); }
 .scan { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: var(--r); border: 1px dashed var(--line-2); font-weight: 500; font-size: 14px; color: var(--text-2); width: 100%; }
 .scan:hover { border-color: var(--navy-900); color: var(--text); }

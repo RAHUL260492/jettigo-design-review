@@ -262,6 +262,50 @@
     });
   };
 
+  /** Save generated content as a real file download. */
+  J.download = (name, content, type = "text/plain;charset=utf-8") => {
+    const url = URL.createObjectURL(content instanceof Blob ? content : new Blob([content], { type }));
+    const a = Object.assign(document.createElement("a"), { href: url, download: name });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+  J.csv = (rows) => rows.map((r) => r.map((v) => {
+    const s = String(v ?? "");
+    return `"${(/^[=+\-@]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
+  }).join(",")).join("\n");
+
+  /**
+   * Sheet: slides up on phones, centred dialog on larger screens.
+   * Returns the panel element; call J.closeSheet() to dismiss.
+   */
+  let sheetReturnFocus = null;
+  J.sheet = ({ title, body, onOpen }) => {
+    J.closeSheet();
+    sheetReturnFocus = document.activeElement;
+    const el = document.createElement("div");
+    el.className = "sheet";
+    el.innerHTML = `<div class="sheet-panel" role="dialog" aria-modal="true" aria-label="${J.esc(title)}">
+      <div class="row between sheet-head"><b class="h3">${J.esc(title)}</b><button type="button" class="iconbtn" data-sheet-close aria-label="Close">${J.ic("x")}</button></div>
+      <div class="sheet-body">${body}</div></div>`;
+    document.body.appendChild(el);
+    J.icons(el);
+    el.addEventListener("click", (e) => { if (e.target === el || e.target.closest("[data-sheet-close]")) J.closeSheet(); });
+    el.addEventListener("keydown", (e) => { if (e.key === "Escape") J.closeSheet(); });
+    requestAnimationFrame(() => el.classList.add("open"));
+    const panel = el.querySelector(".sheet-panel");
+    (panel.querySelector("input, select, textarea, button:not([data-sheet-close])") || panel.querySelector("button")).focus();
+    if (onOpen) onOpen(panel);
+    return panel;
+  };
+  J.closeSheet = () => {
+    const el = document.querySelector(".sheet");
+    if (!el) return;
+    el.remove();
+    if (sheetReturnFocus && document.contains(sheetReturnFocus)) sheetReturnFocus.focus();
+  };
+
   J.icons = (root) => {
     if (window.lucide) window.lucide.createIcons({ attrs: { "stroke-width": 1.75 }, root: root || document.body });
   };
@@ -273,6 +317,7 @@
 
   let renderSeq = 0;
   async function render() {
+    J.closeSheet();
     J.timers.forEach((stop) => stop());
     J.timers = [];
     const id = current();
