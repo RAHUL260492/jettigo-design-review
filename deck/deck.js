@@ -51,7 +51,7 @@
   D.top = (active) => {
     const el = document.getElementById("d-top");
     el.outerHTML = `<header class="d-top"><div class="d-wrap d-top-in">
-      <a href="index.html">${J_BRAND}</a><span class="tag">Design review · Phases 1 &amp; 2</span>
+      <a href="index.html">${J_BRAND}</a>
       <nav class="d-nav" aria-label="Sections"><div class="d-nav-in">${D.pages.map((p) => (p.sep ? `<span class="sep"></span>` : `<a href="${p.href}" class="${p.href === active ? "on" : ""}"${p.href === active ? ' aria-current="page"' : ""}>${p.label}</a>`)).join("")}<span class="fx-spot" aria-hidden="true"></span><span class="fx-amb" aria-hidden="true"></span></div></nav>
     </div></header>`;
   };
